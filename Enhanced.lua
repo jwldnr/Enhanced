@@ -252,30 +252,18 @@ function addon:Nameplates()
           local unit = barFrame.unit;
           local displayedUnit = barFrame.displayedUnit or unit;
 
+          local color = barFrame.healthBar:GetStatusBarColor();
+
           local health = select(1, select(1, barFrame):GetChildren());
 
           if (health) then
-            -- get reaction color
-            local red, green, blue;
-            local reaction = UnitReaction(displayedUnit, 'player');
-
-            if (reaction) then
-              red = FACTION_BAR_COLORS[reaction].r;
-              green = FACTION_BAR_COLORS[reaction].g
-              blue = FACTION_BAR_COLORS[reaction].b;
-            else
-              red = 1;
-              green = 1;
-              blue = 1;
-            end
-
             -- get threat status
             if (InCombat and UnitExists(displayedUnit)) then
               local isTanking, status, scaledPercent, rawPercent, threatValue = UnitDetailedThreatSituation('player', displayedUnit);
               if (isTanking) then
                 health:SetStatusBarColor(1, 0, 1);
               else
-                health:SetStatusBarColor(red, green, blue);
+                health:SetStatusBarColor(color.r, color.g, color.b);
               end
             end
 
