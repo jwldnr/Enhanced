@@ -346,7 +346,7 @@ end
 function addon:CastBars()
   -- enable cast bar frame timer
   hooksecurefunc('CastingBarFrame_OnUpdate', function (self, elapsed)
-    print('ev');
+    --print('ev');
     if (not self.timer) then return end;
 
     if (self.update and self.update < elapsed) then
