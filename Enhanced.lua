@@ -4,90 +4,6 @@ local _G = _G;
 
 local InCombat = false;
 
---function events:PLAYER_REGEN_ENABLED() InCombat = false; end;
---function events:PLAYER_REGEN_DISABLED() InCombat = true; end;
-
--- helper functions
-local function DumpNameplateInfo(plate)
-  local ListChildren
-
-  local function ListRegions(object, indent)
-    local count = object:GetNumRegions()
-
-    if count > 0 then print(indent, 'Regions of ', object:GetName()) end
-
-    for i = 1, count do
-      local region = select(i,object:GetRegions())
-
-      local name = region:GetName()
-      local otype = region:GetObjectType()
-      local extra = ''
-
-      if otype == 'FontString' then extra = region:GetText()
-      elseif otype == 'Texture' then extra = region:GetTexture()
-      end
-
-      print(indent, i, otype, name, extra)
-
-    end
-  end
-
-
-  ListChildren = function(object, indent)
-
-    local count = select('#',object:GetChildren())
-
-    if count > 0 then print(indent, 'Children of ', object:GetName()) end
-
-    for i = 1, count do
-      local child = select(i,object:GetChildren())
-      local name = child:GetName()
-      local otype = child:GetObjectType()
-      local extra
-      local sublevels = child:GetNumChildren()
-      local subregions = child:GetNumRegions()
-
-      if otype == 'StatusBar' then extra = child:GetStatusBarTexture()
-      end
-
-      print(indent, i, otype, name, extra, sublevels, subregions)
-      ListRegions(child, indent..'  ')
-
-      ListChildren(child, indent..'    ')
-    end
-  end
-
-  ListChildren(plate, '')
-
-end
-
--- GetUnitCombatStatus: Determines if a unit is in combat by checking the name text color
-local function GetUnitCombatStatus(r, g, b) return (r > .5 and g < .5) end
-
--- GetUnitAggroStatus: Determines if a unit is attacking, by looking at aggro glow region
-local function GetUnitAggroStatus(threatRegion)
-  if (not threatRegion:IsShown()) then return 'LOW', 0 end;
-
-  local red, green, blue, alpha = threatRegion:GetVertexColor();
-  local opacity = threatRegion:GetVertexColor();
-
-  if threatRegion:IsShown() and (alpha < .9 or opacity < .9) then
-  --if threatRegion:IsShown() and alpha > .9 then
-    --print(unit.name, alpha, opacity)
-
-    -- Unfinished
-  end
-
-
-  if red > 0 then
-    if green > 0 then
-      if blue > 0 then return 'MEDIUM', 1 end;
-      return 'MEDIUM', 2;
-    end
-    return 'HIGH', 3;
-  end
-end
-
 function addon:Load()
   -- once
   LoadAddOn('Blizzard_CombatText');
@@ -316,6 +232,7 @@ function addon:Nameplates()
   frame:RegisterEvent('PLAYER_REGEN_ENABLED');
 
   frame:SetScript('OnEvent', function (self, event, ...)
+
     if (event == 'PLAYER_REGEN_DISABLED') then
       InCombat = true;
     elseif (event == 'PLAYER_REGEN_ENABLED') then
@@ -329,38 +246,33 @@ function addon:Nameplates()
       local frame = select(index, WorldFrame:GetChildren());
 
       if (frame:GetName() and frame:GetName():find('NamePlate%d')) then
-        local barFrame, nameFrame = frame:GetChildren();
-        local threat, border, highlight, level, boss, raid, dragon = barFrame:GetRegions();
+        local barFrame = frame:GetChildren();
 
-        local threatSituation, threatValue;
+        if (barFrame) then
+          local unit = barFrame.unit;
+          local displayedUnit = barFrame.displayedUnit or unit;
 
-        if (InCombat) then
-          threatSituation, threatValue = GetUnitAggroStatus(threat);
-        else
-          threatSituation = 'LOW';
-          threatValue = 0 ;
-        end
+          local health = select(1, select(1, barFrame):GetChildren());
 
-        frame.health = select(1, select(1, frame:GetChildren()):GetChildren());
+          if (health) then
+            -- get threat status
+            if (InCombat and UnitExists(displayedUnit)) then
+              local isTanking, status, scaledPercent, rawPercent, threatValue = UnitDetailedThreatSituation('player', displayedUnit);
+              if (isTanking) then
+                health:SetStatusBarColor(1, 0, 1);
+              end
+            end
 
-        if (frame.health) then
-          local red, green, blue = frame.health:GetStatusBarColor();
-
-          if (threatSituation == 'HIGH') then
-            frame.health:SetStatusBarColor(1, 0.5, 1);
-          else
-            frame.health:SetStatusBarColor(red, green, blue);
-          end
-
-          if (not frame.health.value) then
-            frame.health.value = frame.health:CreateFontString(nil, 'ARTWORK');
-            frame.health.value:SetPoint('CENTER', frame.health.value:GetParent(), 'CENTER', 10, 35);
-            frame.health.value:SetFont(STANDARD_TEXT_FONT, 20, 'OUTLINE');
-            --f.h.v:SetVertexColor(0, 1, 0, 1);
-          else
-            local _, maxHealth = frame.health:GetMinMaxValues();
-            local value = frame.health:GetValue();
-            frame.health.value:SetText(string.format(math.floor((value / maxHealth) * 100)) .. ' %');
+            -- set health percentage value
+            if (not health.value) then
+              health.value = health:CreateFontString(nil, 'ARTWORK');
+              health.value:SetPoint('CENTER', health.value:GetParent(), 'CENTER', 0, 35);
+              health.value:SetFont(STANDARD_TEXT_FONT, 20, 'OUTLINE');
+            else
+              local _, maxHealth = health:GetMinMaxValues();
+              local value = health:GetValue();
+              health.value:SetText(string.format(math.floor((value / maxHealth) * 100)) .. ' %');
+            end
           end
         end
       end
@@ -430,9 +342,11 @@ function addon:Textures()
   end);
 end
 
+-- NOTE do not work
 function addon:CastBars()
   -- enable cast bar frame timer
   hooksecurefunc('CastingBarFrame_OnUpdate', function (self, elapsed)
+    print('ev');
     if (not self.timer) then return end;
 
     if (self.update and self.update < elapsed) then
