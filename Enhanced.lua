@@ -1,10 +1,11 @@
-local ns, addon = ...;
-
+-- locals
+local AddonName, Addon = ...;
 local _G = _G;
+local pairs = pairs;
 
 local InCombat = false;
 
-function addon:Load()
+function Addon:Load()
   -- once
   LoadAddOn('Blizzard_CombatText');
 
@@ -26,6 +27,11 @@ function addon:Load()
     TotemFrame:SetPoint('CENTER', UIParent, 'CENTER', 0, -140);
     TotemFrame.SetPoint = function() end;
     TotemFrame:SetScale('1.2');
+  elseif (class == 'DEATHKNIGHT') then
+    RuneFrame:ClearAllPoints();
+    RuneFrame:SetPoint('CENTER', UIParent, 'CENTER', 0, -150);
+    RuneFrame.SetPoint = function() end;
+    RuneFrame:SetScale('1.2');
   end
 
   PlayerName:SetVertexColor(1, 1, 1);
@@ -71,18 +77,6 @@ function addon:Load()
   CastingBarFrame.SetPoint = function() end;
   CastingBarFrame:SetScale(1.1);
 
-  -- timer text for player cast bar
-  CastingBarFrame.timer = CastingBarFrame:CreateFontString(nil);
-  CastingBarFrame.timer:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
-  CastingBarFrame.timer:SetPoint('TOP', CastingBarFrame, 'BOTTOM', 0, -10);
-  CastingBarFrame.update = .1;
-
-  -- timer text for target cast bar
-  TargetFrameSpellBar.timer = TargetFrameSpellBar:CreateFontString(nil);
-  TargetFrameSpellBar.timer:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
-  TargetFrameSpellBar.timer:SetPoint('TOP', TargetFrameSpellBar, 'BOTTOM', 0, -10);
-  TargetFrameSpellBar.update = .1;
-
   -- timer text for spell activation overlay
   SpellActivationOverlayFrame.timer = SpellActivationOverlayFrame:CreateFontString(nil);
   SpellActivationOverlayFrame.timer:SetFont(STANDARD_TEXT_FONT, 22, 'OUTLINE');
@@ -113,7 +107,7 @@ function addon:Load()
 
 end
 
-function addon:Test()
+function Addon:Test()
   -- helper functions
   local function IsTanking(unit)
     local isTanking = UnitDetailedThreatSituation('player', unit);
@@ -123,8 +117,8 @@ function addon:Test()
   local function HealthPercent(frame)
     if (not frame.healthBar.value) then
       frame.healthBar.value = frame.healthBar:CreateFontString(nil, 'ARTWORK');
-      frame.healthBar.value:SetPoint('CENTER', frame.healthBar.value:GetParent(), 'BOTTOM', 0, -30);
-      frame.healthBar.value:SetFont(STANDARD_TEXT_FONT, 20, 'OUTLINE');
+      frame.healthBar.value:SetPoint('LEFT', frame.healthBar.value:GetParent(), 'RIGHT', 7, 0);
+      frame.healthBar.value:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
     else
       local _, maxHealth = frame.healthBar:GetMinMaxValues();
       local value = frame.healthBar:GetValue();
@@ -145,25 +139,44 @@ function addon:Test()
 
   hooksecurefunc('CompactUnitFrame_SetUpFrame', function (self, func)
     HealthPercent(self);
+
+    self.healthBar.background:SetTexture("Interface\\TargetingFrame\\UI-StatusBar");
+    self.healthBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
+    self.healthBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar");
+
+  	if (self.castBar) then
+      self.castBar.background:SetTexture("Interface\\TargetingFrame\\UI-StatusBar");
+      self.castBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
+      self.castBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar");
+    end
   end);
 
   hooksecurefunc('CompactUnitFrame_UpdateHealth', function (self)
     HealthPercent(self);
   end);
+
+  hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', function (self)
+    if (self.optionTable.defaultBorderColor) then
+      self.healthBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
+    	if (self.castBar and self.castBar.border) then
+    		self.castBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
+    	end
+  	end
+  end)
 end
 
-function addon:Buffs()
+function Addon:Buffs()
   local _, class = UnitClass('player');
   if (class == 'SHAMAN') then
     SpellActivationOverlayFrame:SetAlpha(1.0);
     SpellActivationOverlayFrame.SetAlpha = function() end;
 
-    addon:TrackTidalWaves();
-    addon:TrackUnleashedFury();
+    self:TrackTidalWaves();
+    self:TrackUnleashedFury();
   end
 end
 
-function addon:TrackTidalWaves()
+function Addon:TrackTidalWaves()
   local frame = CreateFrame('FRAME');
   local buffName = 'Tidal Waves';
 
@@ -214,7 +227,7 @@ function addon:TrackTidalWaves()
   end);
 end
 
-function addon:TrackUnleashedFury()
+function Addon:TrackUnleashedFury()
   local frame = CreateFrame('FRAME');
   local buffName = 'Unleashed Fury';
 
@@ -265,7 +278,7 @@ function addon:TrackUnleashedFury()
   end);
 end
 
-function addon:Textures()
+function Addon:Textures()
   local frame = CreateFrame('Frame');
   frame:RegisterEvent('ADDON_LOADED');
 
@@ -273,6 +286,7 @@ function addon:Textures()
   frame:SetScript('OnEvent', function(self, event, addon)
     if (addon == 'Blizzard_TimeManager') then
       for i, v in pairs({
+        -- UNIT FRAMES
         PlayerFrameTexture,
         TargetFrameTextureFrameTexture,
         PetFrameTexture,
@@ -292,6 +306,30 @@ function addon:Textures()
         BonusActionBarFrameTexture2,
         BonusActionBarFrameTexture3,
         BonusActionBarFrameTexture4,
+        Boss1TargetFrameTextureFrameTexture,
+      	Boss2TargetFrameTextureFrameTexture,
+      	Boss3TargetFrameTextureFrameTexture,
+      	Boss4TargetFrameTextureFrameTexture,
+      	Boss5TargetFrameTextureFrameTexture,
+      	Boss1TargetFrameSpellBarBorder,
+      	Boss2TargetFrameSpellBarBorder,
+      	Boss3TargetFrameSpellBarBorder,
+      	Boss4TargetFrameSpellBarBorder,
+      	Boss5TargetFrameSpellBarBorder,
+        CastingBarFrameBorder,
+        FocusFrameSpellBarBorder,
+        TargetFrameSpellBarBorder,
+        RuneButtonIndividual1BorderTexture,
+        RuneButtonIndividual2BorderTexture,
+        RuneButtonIndividual3BorderTexture,
+        RuneButtonIndividual4BorderTexture,
+        RuneButtonIndividual5BorderTexture,
+        RuneButtonIndividual6BorderTexture,
+        PaladinPowerBarBG,
+        PaladinPowerBarBankBG,
+        --MAIN MENU
+        SlidingActionBarTexture0,
+        SlidingActionBarTexture1,
         MainMenuBarLeftEndCap,
         MainMenuBarRightEndCap,
         MainMenuBarTexture0,
@@ -302,6 +340,8 @@ function addon:Textures()
         MainMenuMaxLevelBar1,
         MainMenuMaxLevelBar2,
         MainMenuMaxLevelBar3,
+        MainMenuXPBarTextureLeftCap,
+      	MainMenuXPBarTextureRightCap,
         MainMenuXPBarTextureMid,
         MainMenuXPBarDiv1,
         MainMenuXPBarDiv2,
@@ -322,15 +362,63 @@ function addon:Textures()
         MainMenuXPBarDiv17,
         MainMenuXPBarDiv18,
         MainMenuXPBarDiv19,
-        MinimapBorder,
-        CastingBarFrameBorder,
-        FocusFrameSpellBarBorder,
-        TargetFrameSpellBarBorder,
-        MiniMapTrackingButtonBorder,
+        ReputationWatchBarTexture0,
+      	ReputationWatchBarTexture1,
+      	ReputationWatchBarTexture2,
+      	ReputationWatchBarTexture3,
+      	ReputationXPBarTexture0,
+      	ReputationXPBarTexture1,
+      	ReputationXPBarTexture2,
+      	ReputationXPBarTexture3,
+        ReputationWatchBar.StatusBar.WatchBarTexture0,
+        ReputationWatchBar.StatusBar.WatchBarTexture1,
+        ReputationWatchBar.StatusBar.WatchBarTexture2,
+        ReputationWatchBar.StatusBar.WatchBarTexture3,
+        StanceBarLeft,
+      	StanceBarMiddle,
+      	StanceBarRight,
+        --ARENA FRAMES
+      	ArenaEnemyFrame1Texture,
+      	ArenaEnemyFrame2Texture,
+      	ArenaEnemyFrame3Texture,
+      	ArenaEnemyFrame4Texture,
+      	ArenaEnemyFrame5Texture,
+      	ArenaEnemyFrame1SpecBorder,
+      	ArenaEnemyFrame2SpecBorder,
+      	ArenaEnemyFrame3SpecBorder,
+      	ArenaEnemyFrame4SpecBorder,
+      	ArenaEnemyFrame5SpecBorder,
+      	ArenaEnemyFrame1PetFrameTexture,
+      	ArenaEnemyFrame2PetFrameTexture,
+      	ArenaEnemyFrame3PetFrameTexture,
+      	ArenaEnemyFrame4PetFrameTexture,
+      	ArenaEnemyFrame5PetFrameTexture,
+      	ArenaPrepFrame1Texture,
+      	ArenaPrepFrame2Texture,
+      	ArenaPrepFrame3Texture,
+      	ArenaPrepFrame4Texture,
+      	ArenaPrepFrame5Texture,
+      	ArenaPrepFrame1SpecBorder,
+      	ArenaPrepFrame2SpecBorder,
+      	ArenaPrepFrame3SpecBorder,
+      	ArenaPrepFrame4SpecBorder,
+      	ArenaPrepFrame5SpecBorder,
+        -- PANES
+      	CharacterFrameTitleBg,
+      	CharacterFrameBg,
+      	ObjectiveTrackerBlocksFrame.QuestHeader.Background,
+      	-- MINIMAP
+      	MinimapBorder,
+      	MinimapBorderTop,
+      	MiniMapTrackingButtonBorder,
         MiniMapLFGFrameBorder,
         MiniMapBattlefieldBorder,
         MiniMapMailBorder,
-        MinimapBorderTop,
+        select(1, MinimapZoomIn:GetRegions()),
+        select(3, MinimapZoomIn:GetRegions()),
+        select(1, MinimapZoomOut:GetRegions()),
+        select(3, MinimapZoomOut:GetRegions()),
+        QueueStatusMinimapButtonBorder,
         select(1, TimeManagerClockButton:GetRegions())
       }) do
         v:SetVertexColor(0.33, 0.33, 0.33);
@@ -350,36 +438,40 @@ function addon:Textures()
 end
 
 -- NOTE do not work
-function addon:CastBars()
+function Addon:CastBars()
   -- enable cast bar frame timer
   hooksecurefunc('CastingBarFrame_OnUpdate', function (self, elapsed)
-    --print('ev');
-    if (not self.timer) then return end;
-
-    if (self.update and self.update < elapsed) then
-      if (self.casting) then
-        self.timer:SetText(format('%2.1f/%1.1f', max(self.maxValue - self.value, 0), self.maxValue));
-      elseif (self.channeling) then
-        self.timer:SetText(format('%.1f', max(self.value, 0)));
-      else
-        self.timer:SetText(nil);
-      end
-
-      self.update = .1;
+    if (not self.timer) then
+      self.timer = self:CreateFontString(nil);
+      self.timer:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
+      self.timer:SetPoint('TOP', self, 'BOTTOM', 0, -3);
+      self.update = 0.1;
     else
-      self.update = self.update - elapsed;
+      if (self.update and self.update < elapsed) then
+        if (self.casting) then
+          self.timer:SetText(format('%2.1f/%1.1f', max(self.maxValue - self.value, 0), self.maxValue));
+        elseif (self.channeling) then
+          self.timer:SetText(format('%.1f', max(self.value, 0)));
+        else
+          self.timer:SetText(nil);
+        end
+
+        self.update = 0.1;
+      else
+        self.update = self.update - elapsed;
+      end
     end
   end);
 end
 
-function addon:UnitFrames()
+function Addon:UnitFrames()
   -- class icons
-  hooksecurefunc('UnitFramePortrait_Update',function (self)
-    if self.portrait then
-      if UnitIsPlayer(self.unit) then
+  hooksecurefunc('UnitFramePortrait_Update', function (self)
+    if (self.portrait) then
+      if (UnitIsPlayer(self.unit)) then
         local t = CLASS_ICON_TCOORDS[select(2, UnitClass(self.unit))];
 
-        if t then
+        if (t) then
           self.portrait:SetTexture('Interface\\TargetingFrame\\UI-Classes-Circles');
           self.portrait:SetTexCoord(unpack(t));
         end
@@ -412,11 +504,11 @@ function addon:UnitFrames()
   frame:RegisterEvent('UNIT_FACTION');
 
   local function handler(self, event, ...)
-    if UnitIsPlayer('target') then
+    if (UnitIsPlayer('target')) then
       local c = RAID_CLASS_COLORS[select(2, UnitClass('target'))];
       TargetFrameNameBackground:SetVertexColor(c.r, c.g, c.b);
     end
-    if UnitIsPlayer('focus') then
+    if (UnitIsPlayer('focus')) then
       local c = RAID_CLASS_COLORS[select(2, UnitClass('focus'))];
       FocusFrameNameBackground:SetVertexColor(c.r, c.g, c.b);
     end
@@ -433,4 +525,4 @@ function addon:UnitFrames()
 end
 
 -- load addon
-addon:Load();
+Addon:Load();
