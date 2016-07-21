@@ -4,6 +4,21 @@ local _G = _G;
 
 local InCombat = false;
 
+-- helper functions
+local function IsTanking(unit)
+  local isTanking = UnitDetailedThreatSituation('player', unit);
+  return isTanking;
+end
+
+local function IsOnThreatList(threatStatus)
+  return threatStatus ~= nil;
+end
+
+local function IsOnThreatListWithPlayer(unit)
+  local _, threatStatus = UnitDetailedThreatSituation('player', unit);
+  return IsOnThreatList(threatStatus);
+end
+
 function addon:Load()
   -- once
   LoadAddOn('Blizzard_CombatText');
@@ -232,7 +247,6 @@ function addon:Nameplates()
   frame:RegisterEvent('PLAYER_REGEN_ENABLED');
 
   frame:SetScript('OnEvent', function (self, event, ...)
-
     if (event == 'PLAYER_REGEN_DISABLED') then
       InCombat = true;
     elseif (event == 'PLAYER_REGEN_ENABLED') then
@@ -249,21 +263,27 @@ function addon:Nameplates()
         local barFrame = frame:GetChildren();
 
         if (barFrame) then
-          local unit = barFrame.unit;
-          local displayedUnit = barFrame.displayedUnit or unit;
-
-          local color = barFrame.healthBar:GetStatusBarColor();
-
           local health = select(1, select(1, barFrame):GetChildren());
 
           if (health) then
-            -- get threat status
-            if (InCombat and UnitExists(displayedUnit)) then
-              local isTanking, status, scaledPercent, rawPercent, threatValue = UnitDetailedThreatSituation('player', displayedUnit);
-              if (isTanking) then
-                health:SetStatusBarColor(1, 0, 1);
+            -- color health bar
+            if (UnitExists(barFrame.displayedUnit)) then
+              local r, g, b;
+
+              if (barFrame.optionTable.considerSelectionInCombatAsHostile and IsOnThreatListWithPlayer(barFrame.displayedUnit)) then
+                if (IsTanking(barFrame.displayedUnit)) then
+                  r, g, b = 1.0, 0.0, 1.0;
+                else
+                  r, g, b = 1.0, 0.0, 0.0;
+                end
               else
-                health:SetStatusBarColor(color.r, color.g, color.b);
+                r, g, b = UnitSelectionColor(barFrame.unit, barFrame.optionTable.colorHealthWithExtendedColors);
+              end
+
+              if (r ~= health.r or g ~= health.g or b ~= health.b) then
+                health:SetStatusBarColor(r, g, b);
+
+                health.r, health.g, health.b = r, g, b;
               end
             end
 
