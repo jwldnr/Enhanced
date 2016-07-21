@@ -270,20 +270,31 @@ function addon:Nameplates()
             if (UnitExists(barFrame.displayedUnit)) then
               local r, g, b;
 
-              if (barFrame.optionTable.considerSelectionInCombatAsHostile and IsOnThreatListWithPlayer(barFrame.displayedUnit)) then
-                if (IsTanking(barFrame.displayedUnit)) then
-                  r, g, b = 1.0, 0.0, 1.0;
+              local _, class = UnitClass(barFrame.unit);
+        			local color = RAID_CLASS_COLORS[class];
+
+              if (UnitIsPlayer(barFrame.unit) and color and barFrame.optionTable.useClassColors) then
+                r, g, b = color.r, color.g, color.b;
+              elseif (barFrame.optionTable.colorHealthBySelection) then
+                if (barFrame.optionTable.considerSelectionInCombatAsHostile and IsOnThreatListWithPlayer(barFrame.displayedUnit)) then
+                  if (IsTanking(barFrame.displayedUnit)) then
+                    r, g, b = 1.0, 0.0, 1.0;
+                  else
+                    r, g, b = 1.0, 0.0, 0.0;
+                  end
                 else
-                  r, g, b = 1.0, 0.0, 0.0;
+                  r, g, b = UnitSelectionColor(barFrame.unit, barFrame.optionTable.colorHealthWithExtendedColors);
                 end
+
+                if (r ~= health.r or g ~= health.g or b ~= health.b) then
+                  health:SetStatusBarColor(r, g, b);
+
+                  health.r, health.g, health.b = r, g, b;
+                end
+              elseif (UnitIsFriend('player', barFrame.unit)) then
+                r, g, b = 0.0, 1.0, 0.0;
               else
-                r, g, b = UnitSelectionColor(barFrame.unit, barFrame.optionTable.colorHealthWithExtendedColors);
-              end
-
-              if (r ~= health.r or g ~= health.g or b ~= health.b) then
-                health:SetStatusBarColor(r, g, b);
-
-                health.r, health.g, health.b = r, g, b;
+                r, g, b = 1.0, 0.0, 0.0;
               end
             end
 
@@ -331,6 +342,8 @@ function addon:Textures()
         BonusActionBarFrameTexture2,
         BonusActionBarFrameTexture3,
         BonusActionBarFrameTexture4,
+        MainMenuBarLeftEndCap,
+        MainMenuBarRightEndCap,
         MainMenuBarTexture0,
         MainMenuBarTexture1,
         MainMenuBarTexture2,
@@ -339,6 +352,26 @@ function addon:Textures()
         MainMenuMaxLevelBar1,
         MainMenuMaxLevelBar2,
         MainMenuMaxLevelBar3,
+        MainMenuXPBarTextureMid,
+        MainMenuXPBarDiv1,
+        MainMenuXPBarDiv2,
+        MainMenuXPBarDiv3,
+        MainMenuXPBarDiv4,
+        MainMenuXPBarDiv5,
+        MainMenuXPBarDiv6,
+        MainMenuXPBarDiv7,
+        MainMenuXPBarDiv8,
+        MainMenuXPBarDiv9,
+        MainMenuXPBarDiv10,
+        MainMenuXPBarDiv11,
+        MainMenuXPBarDiv12,
+        MainMenuXPBarDiv13,
+        MainMenuXPBarDiv14,
+        MainMenuXPBarDiv15,
+        MainMenuXPBarDiv16,
+        MainMenuXPBarDiv17,
+        MainMenuXPBarDiv18,
+        MainMenuXPBarDiv19,
         MinimapBorder,
         CastingBarFrameBorder,
         FocusFrameSpellBarBorder,
