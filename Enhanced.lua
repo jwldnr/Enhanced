@@ -4,21 +4,6 @@ local _G = _G;
 
 local InCombat = false;
 
--- helper functions
-local function IsTanking(unit)
-  local isTanking = UnitDetailedThreatSituation('player', unit);
-  return isTanking;
-end
-
-local function IsOnThreatList(threatStatus)
-  return threatStatus ~= nil;
-end
-
-local function IsOnThreatListWithPlayer(unit)
-  local _, threatStatus = UnitDetailedThreatSituation('player', unit);
-  return IsOnThreatList(threatStatus);
-end
-
 function addon:Load()
   -- once
   LoadAddOn('Blizzard_CombatText');
@@ -116,7 +101,7 @@ function addon:Load()
 
   self:Buffs();
 
-  self:Nameplates();
+  --self:Nameplates();
 
   self:Textures();
 
@@ -124,6 +109,47 @@ function addon:Load()
 
   self:UnitFrames();
 
+  self:Test();
+
+end
+
+function addon:Test()
+  -- helper functions
+  local function IsTanking(unit)
+    local isTanking = UnitDetailedThreatSituation('player', unit);
+    return isTanking;
+  end
+
+  local function HealthPercent(frame)
+    if (not frame.healthBar.value) then
+      frame.healthBar.value = frame.healthBar:CreateFontString(nil, 'ARTWORK');
+      frame.healthBar.value:SetPoint('CENTER', frame.healthBar.value:GetParent(), 'TOP', 0, 35);
+      frame.healthBar.value:SetFont(STANDARD_TEXT_FONT, 20, 'OUTLINE');
+    else
+      local _, maxHealth = frame.healthBar:GetMinMaxValues();
+      local value = frame.healthBar:GetValue();
+      frame.healthBar.value:SetText(string.format(math.floor((value / maxHealth) * 100)) .. ' %');
+    end
+  end
+
+  hooksecurefunc('CompactUnitFrame_UpdateHealthColor', function (self)
+    if (IsTanking(self.displayedUnit)) then
+      local r, g, b = 1.0, 0.0, 1.0;
+
+      if (r ~= self.healthBar.r or g ~= self.healthBar.g or b ~= self.healthBar.b) then
+        self.healthBar:SetStatusBarColor(r, g, b);
+        self.healthBar.r, self.healthBar.g, self.healthBar.b = r, g, b;
+      end
+    end
+  end);
+
+  hooksecurefunc('CompactUnitFrame_SetUpFrame', function (self, func)
+    HealthPercent(self);
+  end);
+
+  hooksecurefunc('CompactUnitFrame_UpdateHealth', function (self)
+    HealthPercent(self);
+  end);
 end
 
 function addon:Buffs()
@@ -234,82 +260,6 @@ function addon:TrackUnleashedFury()
         -- remove update script
         self:SetScript('OnUpdate', nil);
         SpellActivationOverlay_HideOverlays(SpellActivationOverlayFrame, 165479);
-      end
-    end
-  end);
-end
-
-function addon:Nameplates()
-  local frame = CreateFrame('Frame');
-
-  -- in and out of combat detection
-  frame:RegisterEvent('PLAYER_REGEN_DISABLED');
-  frame:RegisterEvent('PLAYER_REGEN_ENABLED');
-
-  frame:SetScript('OnEvent', function (self, event, ...)
-    if (event == 'PLAYER_REGEN_DISABLED') then
-      InCombat = true;
-    elseif (event == 'PLAYER_REGEN_ENABLED') then
-      InCombat = false;
-    end
-  end);
-
-  -- nameplate percentage
-  frame:SetScript('OnUpdate', function (self, elapsed)
-    for index = 1, select('#', WorldFrame:GetChildren()) do
-      local frame = select(index, WorldFrame:GetChildren());
-
-      if (frame:GetName() and frame:GetName():find('NamePlate%d')) then
-        local barFrame = frame:GetChildren();
-
-        if (barFrame) then
-          local health = select(1, select(1, barFrame):GetChildren());
-
-          if (health) then
-            -- color health bar
-            if (UnitExists(barFrame.displayedUnit)) then
-              local r, g, b;
-
-              local _, class = UnitClass(barFrame.unit);
-        			local color = RAID_CLASS_COLORS[class];
-
-              if (UnitIsPlayer(barFrame.unit) and color and barFrame.optionTable.useClassColors) then
-                r, g, b = color.r, color.g, color.b;
-              elseif (barFrame.optionTable.colorHealthBySelection) then
-                if (barFrame.optionTable.considerSelectionInCombatAsHostile and IsOnThreatListWithPlayer(barFrame.displayedUnit)) then
-                  if (IsTanking(barFrame.displayedUnit)) then
-                    r, g, b = 1.0, 0.0, 1.0;
-                  else
-                    r, g, b = 1.0, 0.0, 0.0;
-                  end
-                else
-                  r, g, b = UnitSelectionColor(barFrame.unit, barFrame.optionTable.colorHealthWithExtendedColors);
-                end
-
-                if (r ~= health.r or g ~= health.g or b ~= health.b) then
-                  health:SetStatusBarColor(r, g, b);
-
-                  health.r, health.g, health.b = r, g, b;
-                end
-              elseif (UnitIsFriend('player', barFrame.unit)) then
-                r, g, b = 0.0, 1.0, 0.0;
-              else
-                r, g, b = 1.0, 0.0, 0.0;
-              end
-            end
-
-            -- set health percentage value
-            if (not health.value) then
-              health.value = health:CreateFontString(nil, 'ARTWORK');
-              health.value:SetPoint('CENTER', health.value:GetParent(), 'CENTER', 0, 35);
-              health.value:SetFont(STANDARD_TEXT_FONT, 20, 'OUTLINE');
-            else
-              local _, maxHealth = health:GetMinMaxValues();
-              local value = health:GetValue();
-              health.value:SetText(string.format(math.floor((value / maxHealth) * 100)) .. ' %');
-            end
-          end
-        end
       end
     end
   end);
@@ -474,11 +424,11 @@ function addon:UnitFrames()
 
   frame:SetScript('OnEvent', handler);
 
-  for _, BarTextures in pairs({
+  for i, v in pairs({
     TargetFrameNameBackground,
     FocusFrameNameBackground
   }) do
-    BarTextures:SetTexture('Interface\\TargetingFrame\\UI-StatusBar');
+    v:SetTexture('Interface\\TargetingFrame\\UI-StatusBar');
   end
 end
 
