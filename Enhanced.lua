@@ -123,7 +123,7 @@ function addon:Test()
   local function HealthPercent(frame)
     if (not frame.healthBar.value) then
       frame.healthBar.value = frame.healthBar:CreateFontString(nil, 'ARTWORK');
-      frame.healthBar.value:SetPoint('CENTER', frame.healthBar.value:GetParent(), 'TOP', 0, 35);
+      frame.healthBar.value:SetPoint('CENTER', frame.healthBar.value:GetParent(), 'BOTTOM', 0, -30);
       frame.healthBar.value:SetFont(STANDARD_TEXT_FONT, 20, 'OUTLINE');
     else
       local _, maxHealth = frame.healthBar:GetMinMaxValues();
@@ -133,7 +133,7 @@ function addon:Test()
   end
 
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', function (self)
-    if (IsTanking(self.displayedUnit)) then
+    if (UnitExists(self.unit) and IsTanking(self.displayedUnit)) then
       local r, g, b = 1.0, 0.0, 1.0;
 
       if (r ~= self.healthBar.r or g ~= self.healthBar.g or b ~= self.healthBar.b) then
