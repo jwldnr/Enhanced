@@ -46,6 +46,26 @@ function Addon:SetUpNamePlateFrame(frame)
   end
 
   SetNamePlateHealthValue(frame);
+
+  if (NamePlatePlayerResourceFrame) then
+    local _, class = UnitClass('player');
+    local namePlatePlayer = C_NamePlate.GetNamePlateForUnit('player');
+
+    if (namePlatePlayer) then
+      if (class == 'DEATHKNIGHT') then
+        DeathKnightResourceOverlayFrame:Hide();
+        DeathKnightResourceOverlayFrame.Show = function () end
+
+        RuneFrame:SetParent(namePlatePlayer.UnitFrame);
+        RuneFrame:ClearAllPoints();
+        RuneFrame:SetPoint('CENTER', namePlatePlayer.UnitFrame.healthBar, 'CENTER', 3, -36);
+      end
+    end
+
+    if (class == 'DEATHKNIGHT') then
+      RuneFrame:SetShown(namePlatePlayer ~= nil);
+    end
+  end
 end
 
 function Addon:UpdateNamePlateHealth(frame)
@@ -187,6 +207,7 @@ end
 
 function Addon:ADDON_LOADED(self, event, ...)
   local addonName = ...;
+
   if (addonName and addonName == 'Blizzard_CombatText') then
     COMBAT_TEXT_TYPE_INFO['PERIODIC_HEAL'] = { var = nil, show = nil };
     COMBAT_TEXT_TYPE_INFO['HEAL_CRIT'] = { var = nil, show = nil };
