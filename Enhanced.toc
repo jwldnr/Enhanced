@@ -1,7 +1,7 @@
-## Interface: 60200
+## Interface: 70000
 ## Title: WoW User Interface Enhanced
-## Notes: 
-## Version: 1.1
+## Notes:
+## Version: 1.2
 ## Author: jwldnr
 
 Enhanced.lua
