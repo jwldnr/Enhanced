@@ -397,6 +397,12 @@ function Addon:PLAYER_LOGIN()
   -- disable damage on player pet frame
   PetHitIndicator:SetText(nil);
   PetHitIndicator.SetText = function() end
+
+  -- set up alias reload slash command
+  SLASH_RL1 = '/rl';
+  function SlashCmdList.RL(msg, editbox)
+    ReloadUI();
+  end
 end
 
 -- load addon
