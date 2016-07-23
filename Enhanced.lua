@@ -32,17 +32,20 @@ function Addon:Load()
     eventHandler:RegisterEvent('ADDON_LOADED');
     eventHandler:RegisterEvent('PLAYER_LOGIN');
   end
+
+  -- make global
+  -- _G[AddonName] = self;
 end
 
 function Addon:SetUpNamePlateFrame(frame)
-  self.healthBar.background:SetTexture("Interface\\TargetingFrame\\UI-StatusBar");
-  self.healthBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
-  self.healthBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar");
+  frame.healthBar.background:SetTexture("Interface\\TargetingFrame\\UI-StatusBar");
+  frame.healthBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
+  frame.healthBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar");
 
-  if (self.castBar) then
-    self.castBar.background:SetTexture("Interface\\TargetingFrame\\UI-StatusBar");
-    self.castBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
-    self.castBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar");
+  if (frame.castBar) then
+    frame.castBar.background:SetTexture("Interface\\TargetingFrame\\UI-StatusBar");
+    frame.castBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
+    frame.castBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar");
   end
 
   SetNamePlateHealthValue(frame);
@@ -102,23 +105,23 @@ function Addon:UpdateFramePortrait(frame)
 end
 
 function Addon:CheckTargetLevel(frame)
-  local targetLevel = UnitLevel(self.unit);
+  local targetLevel = UnitLevel(frame.unit);
 
-  if (UnitCanAttack('player', self.unit)) then
+  if (UnitCanAttack('player', frame.unit)) then
     local color = GetQuestDifficultyColor(targetLevel);
 
     if (color.r == 1.0 and color.g == 0.82 and color.b == 0.0) then
-      self.levelText:SetVertexColor(1.0, 1.0, 1.0);
+      frame.levelText:SetVertexColor(1.0, 1.0, 1.0);
     end
   else
-    self.levelText:SetVertexColor(1.0, 1.0, 1.0);
+    frame.levelText:SetVertexColor(1.0, 1.0, 1.0);
   end
 end
 
 function Addon:CheckTargetFaction(frame)
-  if (UnitIsPlayer(self.unit)) then
-    local c = RAID_CLASS_COLORS[select(2, UnitClass(self.unit))];
-    self.nameBackground:SetVertexColor(c.r, c.g, c.b);
+  if (UnitIsPlayer(frame.unit)) then
+    local c = RAID_CLASS_COLORS[select(2, UnitClass(frame.unit))];
+    frame.nameBackground:SetVertexColor(c.r, c.g, c.b);
   end
 end
 
@@ -188,6 +191,8 @@ function Addon:ADDON_LOADED(self, event, ...)
 end
 
 function Addon:PLAYER_LOGIN()
+  self:HookActionEvents();
+
   for i, v in pairs({
     -- unit frames
     PlayerFrameTexture,
