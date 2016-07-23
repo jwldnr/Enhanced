@@ -32,9 +32,6 @@ function Addon:Load()
     eventHandler:RegisterEvent('ADDON_LOADED');
     eventHandler:RegisterEvent('PLAYER_LOGIN');
   end
-
-  -- make global
-  -- _G[AddonName] = self;
 end
 
 function Addon:SetUpNamePlateFrame(frame)
