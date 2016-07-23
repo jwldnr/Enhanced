@@ -380,13 +380,6 @@ function Addon:PLAYER_LOGIN()
   -- disable damage on player pet frame
   PetHitIndicator:SetText(nil);
   PetHitIndicator.SetText = function() end
-
-  local _, class = UnitClass('player');
-  if (class == 'SHAMAN') then
-    -- TODO
-  elseif (class == 'DEATHKNIGHT') then
-    -- TODO
-  end
 end
 
 -- load addon
