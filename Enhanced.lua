@@ -63,6 +63,16 @@ function Addon:UpdateNamePlateHealthColor(frame)
   end
 end
 
+function Addon:UpdateNamePlateHealthBorder(frame)
+  if (frame.optionTable.defaultBorderColor) then
+    frame.healthBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
+
+    if (frame.castBar and frame.castBar.border) then
+      frame.castBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
+    end
+  end
+end
+
 function Addon:UpdateNamePlateCastingBarTimer(frame, elapsed)
   if (not frame.timer) then
     frame.timer = frame:CreateFontString(nil);
@@ -135,6 +145,10 @@ function Addon:HookActionEvents()
     Addon:UpdateNamePlateHealthColor(frame);
   end
 
+  local function Frame_UpdateHealthBorder(frame)
+    Addon:UpdateNamePlateHealthBorder(frame);
+  end
+
   local function CastingBarFrame_Update(frame, elapsed)
     Addon:UpdateNamePlateCastingBarTimer(frame, elapsed);
   end
@@ -154,6 +168,7 @@ function Addon:HookActionEvents()
   hooksecurefunc('CompactUnitFrame_SetUpFrame', Frame_SetUpFrame);
   hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateHealth);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateHealthColor);
+  hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateHealthBorder);
   hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
 
   hooksecurefunc('UnitFramePortrait_Update', UnitFrame_PortraitUpdate);
