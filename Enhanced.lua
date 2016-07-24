@@ -9,7 +9,7 @@ local function SetNamePlateHealthValue(frame)
   if (not frame.healthBar.value) then
     frame.healthBar.value = frame.healthBar:CreateFontString(nil, 'ARTWORK');
     frame.healthBar.value:SetPoint('LEFT', frame.healthBar.value:GetParent(), 'RIGHT', 7, 0);
-    frame.healthBar.value:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
+    frame.healthBar.value:SetFontObject('GameFontHighlight');
   else
     local _, maxHealth = frame.healthBar:GetMinMaxValues();
     local value = frame.healthBar:GetValue();
@@ -43,29 +43,32 @@ function Addon:SetUpNamePlateFrame(frame)
     frame.castBar.background:SetTexture("Interface\\TargetingFrame\\UI-StatusBar");
     frame.castBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
     frame.castBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar");
+
+    frame.castBar:SetStatusBarColor(1.0, 0.7, 0.0);
+    frame.castBar.SetStatusBarColor = function () end
   end
 
   SetNamePlateHealthValue(frame);
 
-  if (NamePlatePlayerResourceFrame) then
-    local _, class = UnitClass('player');
-    local namePlatePlayer = C_NamePlate.GetNamePlateForUnit('player');
-
-    if (namePlatePlayer) then
-      if (class == 'DEATHKNIGHT') then
-        DeathKnightResourceOverlayFrame:Hide();
-        DeathKnightResourceOverlayFrame.Show = function () end
-
-        RuneFrame:SetParent(namePlatePlayer.UnitFrame);
-        RuneFrame:ClearAllPoints();
-        RuneFrame:SetPoint('CENTER', namePlatePlayer.UnitFrame.healthBar, 'CENTER', 3, -36);
-      end
-    end
-
-    if (class == 'DEATHKNIGHT') then
-      RuneFrame:SetShown(namePlatePlayer ~= nil);
-    end
-  end
+  -- if (NamePlatePlayerResourceFrame) then
+  --   local _, class = UnitClass('player');
+  --   local namePlatePlayer = C_NamePlate.GetNamePlateForUnit('player');
+  --
+  --   if (namePlatePlayer) then
+  --     if (class == 'DEATHKNIGHT') then
+  --       DeathKnightResourceOverlayFrame:Hide();
+  --       DeathKnightResourceOverlayFrame.Show = function () end
+  --
+  --       RuneFrame:SetParent(namePlatePlayer.UnitFrame);
+  --       RuneFrame:ClearAllPoints();
+  --       RuneFrame:SetPoint('CENTER', namePlatePlayer.UnitFrame.healthBar, 'CENTER', 3, -36);
+  --     end
+  --   end
+  --
+  --   if (class == 'DEATHKNIGHT') then
+  --     RuneFrame:SetShown(namePlatePlayer ~= nil);
+  --   end
+  -- end
 end
 
 function Addon:UpdateNamePlateHealth(frame)
@@ -73,7 +76,7 @@ function Addon:UpdateNamePlateHealth(frame)
 end
 
 function Addon:UpdateNamePlateHealthColor(frame)
-  if (UnitExists(frame.unit) and IsTanking(frame.displayedUnit)) then
+  if (UnitExists(frame.unit) and frame.isTanking or IsTanking(frame.displayedUnit)) then
     local r, g, b = 1.0, 0.0, 1.0;
 
     if (r ~= frame.healthBar.r or g ~= frame.healthBar.g or b ~= frame.healthBar.b) then
@@ -87,9 +90,19 @@ function Addon:UpdateNamePlateHealthBorder(frame)
   if (frame.optionTable.defaultBorderColor) then
     frame.healthBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
 
-    if (frame.castBar and frame.castBar.border) then
-      frame.castBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
+    if (frame.castBar and not frame.castBar.barBorder) then
+      frame.castBar.barBorder = CreateFrame('Frame', nil, frame.castBar, 'NamePlateFullBorderTemplate');
+
+      frame.castBar.barBorder:SetVertexColor(0.0, 0.0, 0.0, 1.0);
+
+      frame.castBar.BorderShield:SetSize(20, 24);
     end
+  end
+end
+
+function Addon:UpdateClassificationIndicator(frame)
+  if (frame.optionTable.showClassificationIndicator) then
+    frame.classificationIndicator:Hide();
   end
 end
 
@@ -169,6 +182,10 @@ function Addon:HookActionEvents()
     Addon:UpdateNamePlateHealthBorder(frame);
   end
 
+  local function Frame_UpdateClassificationIndicator(frame)
+    Addon:UpdateClassificationIndicator(frame);
+  end
+
   local function CastingBarFrame_Update(frame, elapsed)
     Addon:UpdateNamePlateCastingBarTimer(frame, elapsed);
   end
@@ -189,6 +206,7 @@ function Addon:HookActionEvents()
   hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateHealth);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateHealthColor);
   hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateHealthBorder);
+  hooksecurefunc('CompactUnitFrame_UpdateClassificationIndicator', Frame_UpdateClassificationIndicator);
   hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
 
   hooksecurefunc('UnitFramePortrait_Update', UnitFrame_PortraitUpdate);
@@ -378,34 +396,30 @@ function Addon:PLAYER_LOGIN()
     v:SetTexture('Interface\\TargetingFrame\\UI-StatusBar');
   end
 
-  -- replace the original text color with white
-  PlayerName:SetVertexColor(1, 1, 1);
-  PlayerName.SetVertexColor = function() end
-
-  PlayerLevelText:SetVertexColor(1, 1, 1);
-  PlayerLevelText.SetVertexColor = function() end
-
-  TargetFrameToTTextureFrameName:SetVertexColor(1, 1, 1);
-  TargetFrameToTTextureFrameName.SetVertexColor = function() end
-
-  for i = 1, 4, 1 do
-    -- party member name
-    local partyMemberName = 'PartyMemberFrame'..i..'Name';
-    local playerName = _G[partyMemberName];
-
-    playerName:SetVertexColor(1, 1, 1);
-    playerName.SetVertexColor = function() end
-
-    -- party member pet name
-    local petFrameName = 'PartyMemberFrame'..i..'PetFrameName';
-    local petName = _G[petFrameName];
-
-    petName:Hide();
-    petName.Show = function() end
+  for i, v in pairs({
+    PlayerName,
+    PlayerLevelText,
+    TargetFrameTextureFrameName,
+    TargetFrameToTTextureFrameName,
+    FocusFrameToTTextureFrameName,
+    PartyMemberFrame1Name,
+    PartyMemberFrame2Name,
+    PartyMemberFrame3Name,
+    PartyMemberFrame4Name,
+  }) do
+    v:SetVertexColor(1.0, 1.0, 1.0);
+    v.SetVertexColor = function () end
   end
 
-  TargetFrameTextureFrameName:SetVertexColor(1, 1, 1);
-  TargetFrameTextureFrameName.SetVertexColor = function() end
+  for i, v in pairs({
+    PartyMemberFrame1PetFrameName,
+    PartyMemberFrame2PetFrameName,
+    PartyMemberFrame3PetFrameName,
+    PartyMemberFrame4PetFrameName,
+  }) do
+    v:Hide();
+    v.Show = function() end
+  end
 
   -- adjust the player and target cast bar scale
   CastingBarFrame:SetScale(1.2);
