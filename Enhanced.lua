@@ -102,6 +102,7 @@ end
 
 function Addon:UpdateClassificationIndicator(frame)
   if (frame.optionTable.showClassificationIndicator) then
+    frame.optionTable.showClassificationIndicator = false;
     frame.classificationIndicator:Hide();
   end
 end
@@ -373,6 +374,15 @@ function Addon:PLAYER_LOGIN()
     MiniMapLFGFrameBorder,
     MiniMapBattlefieldBorder,
     MiniMapMailBorder,
+    -- raid frame
+    CompactRaidFrameContainerBorderFrameBorderTopLeft,
+    CompactRaidFrameContainerBorderFrameBorderTop,
+    CompactRaidFrameContainerBorderFrameBorderTopRight,
+    CompactRaidFrameContainerBorderFrameBorderRight,
+    CompactRaidFrameContainerBorderFrameBorderBottomRight,
+    CompactRaidFrameContainerBorderFrameBorderBottom,
+    CompactRaidFrameContainerBorderFrameBorderBottomLeft,
+    CompactRaidFrameContainerBorderFrameBorderLeft,
     select(1, MinimapZoomIn:GetRegions()),
     select(3, MinimapZoomIn:GetRegions()),
     select(1, MinimapZoomOut:GetRegions()),
