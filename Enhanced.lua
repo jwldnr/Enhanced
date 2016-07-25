@@ -50,6 +50,10 @@ function Addon:SetUpNamePlateFrame(frame)
 
   SetNamePlateHealthValue(frame);
 
+  if (frame.optionTable.showClassificationIndicator) then
+    frame.optionTable.showClassificationIndicator = false;
+  end
+
   -- if (NamePlatePlayerResourceFrame) then
   --   local _, class = UnitClass('player');
   --   local namePlatePlayer = C_NamePlate.GetNamePlateForUnit('player');
@@ -97,13 +101,6 @@ function Addon:UpdateNamePlateHealthBorder(frame)
 
       frame.castBar.BorderShield:SetSize(20, 24);
     end
-  end
-end
-
-function Addon:UpdateClassificationIndicator(frame)
-  if (frame.optionTable.showClassificationIndicator) then
-    frame.optionTable.showClassificationIndicator = false;
-    frame.classificationIndicator:Hide();
   end
 end
 
@@ -183,10 +180,6 @@ function Addon:HookActionEvents()
     Addon:UpdateNamePlateHealthBorder(frame);
   end
 
-  local function Frame_UpdateClassificationIndicator(frame)
-    Addon:UpdateClassificationIndicator(frame);
-  end
-
   local function CastingBarFrame_Update(frame, elapsed)
     Addon:UpdateNamePlateCastingBarTimer(frame, elapsed);
   end
@@ -207,7 +200,6 @@ function Addon:HookActionEvents()
   hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateHealth);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateHealthColor);
   hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateHealthBorder);
-  hooksecurefunc('CompactUnitFrame_UpdateClassificationIndicator', Frame_UpdateClassificationIndicator);
   hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
 
   hooksecurefunc('UnitFramePortrait_Update', UnitFrame_PortraitUpdate);
