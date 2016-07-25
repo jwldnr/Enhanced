@@ -435,6 +435,13 @@ function Addon:PLAYER_LOGIN()
   PetHitIndicator:SetText(nil);
   PetHitIndicator.SetText = function() end
 
+  local _, class = UnitClass('player');
+  if (class == 'DEATHKNIGHT') then
+    RuneFrame:ClearAllPoints();
+    RuneFrame:SetPoint('CENTER', PlayerFrame, 'BOTTOM', 27, 0);
+    RuneFrame:SetScale(1.3);
+  end
+
   -- set up alias reload slash command
   SLASH_RL1 = '/rl';
   function SlashCmdList.RL(msg, editbox)
