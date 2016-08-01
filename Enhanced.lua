@@ -35,14 +35,14 @@ function Addon:Load()
 end
 
 function Addon:SetUpNamePlateFrame(frame)
-  frame.healthBar.background:SetTexture("Interface\\TargetingFrame\\UI-StatusBar");
+  frame.healthBar.background:SetTexture('Interface\\TargetingFrame\\UI-StatusBar');
   frame.healthBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
-  frame.healthBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar");
+  frame.healthBar:SetStatusBarTexture('Interface\\TargetingFrame\\UI-StatusBar');
 
   if (frame.castBar) then
-    frame.castBar.background:SetTexture("Interface\\TargetingFrame\\UI-StatusBar");
+    frame.castBar.background:SetTexture('Interface\\TargetingFrame\\UI-StatusBar');
     frame.castBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
-    frame.castBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar");
+    frame.castBar:SetStatusBarTexture('Interface\\TargetingFrame\\UI-StatusBar');
 
     --frame.castBar:SetStatusBarColor(1.0, 0.7, 0.0);
     --frame.castBar.SetStatusBarColor = function () end
