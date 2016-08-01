@@ -430,7 +430,7 @@ function Addon:PLAYER_LOGIN()
   end
 
   -- adjust the player and target cast bar scale
-  CastingBarFrame:SetScale(1.2);
+  -- CastingBarFrame:SetScale(1.2);
   TargetFrameSpellBar:SetScale(1.2);
 
   -- disable damage on player frame
@@ -453,6 +453,8 @@ function Addon:PLAYER_LOGIN()
   function SlashCmdList.RL(msg, editbox)
     ReloadUI();
   end
+
+  SetConsoleKey('<');
 end
 
 -- load addon
