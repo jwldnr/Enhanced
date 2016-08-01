@@ -161,8 +161,8 @@ end
 
 function Addon:CheckTargetFaction(frame)
   if (UnitIsPlayer(frame.unit)) then
-    local c = RAID_CLASS_COLORS[select(2, UnitClass(frame.unit))];
-    frame.nameBackground:SetVertexColor(c.r, c.g, c.b);
+    local color = RAID_CLASS_COLORS[select(2, UnitClass(frame.unit))];
+    frame.nameBackground:SetVertexColor(color.r, color.g, color.b);
   end
 end
 
