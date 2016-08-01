@@ -3,17 +3,23 @@ local AddonName, Addon = ...;
 
 local _G = _G;
 local pairs = pairs;
+local unpack = unpack;
+local format = string.format;
+local max = math.max;
+local floor = math.floor;
+local print = print;
 
 -- helper functions
 local function UpdateNamePlateHealthValue(frame)
   if (not frame.healthBar.value) then
     frame.healthBar.value = frame.healthBar:CreateFontString(nil, 'ARTWORK');
-    frame.healthBar.value:SetPoint('LEFT', frame.healthBar.value:GetParent(), 'RIGHT', 7, 0);
     frame.healthBar.value:SetFontObject('GameFontHighlight');
+    -- frame.healthBar.value:SetShadowOffset(1, 1);
+    frame.healthBar.value:SetPoint('LEFT', frame.healthBar.value:GetParent(), 'RIGHT', 7, 0);
   else
     local _, maxHealth = frame.healthBar:GetMinMaxValues();
     local value = frame.healthBar:GetValue();
-    frame.healthBar.value:SetText(string.format(math.floor((value / maxHealth) * 100)) .. ' %');
+    frame.healthBar.value:SetText(format(floor((value / maxHealth) * 100)) .. ' %');
   end
 end
 
@@ -47,11 +53,15 @@ function Addon:SetupNamePlate(frame, setupOptions, frameOptions)
   frame.castBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
 
   frame.castBar.BorderShield:SetSize(20, 24);
+
+  -- frame.castBar.Icon:SetSize(50, 50);
   -- TODO set frame.castBar.Icon size
 
-  SetNamePlateHealthValue(frame);
+  UpdateNamePlateHealthValue(frame);
 
-  frame.classificationIndicator = nil;
+  if (frame.optionTable.showClassificationIndicator) then
+    frame.optionTable.showClassificationIndicator = nil;
+  end
 
   -- if (NamePlatePlayerResourceFrame) then
   -- local _, class = UnitClass('player');
@@ -75,7 +85,7 @@ function Addon:SetupNamePlate(frame, setupOptions, frameOptions)
 end
 
 function Addon:UpdateNamePlateHealth(frame)
-  self:UpdateNamePlateHealthValue(frame);
+  UpdateNamePlateHealthValue(frame);
 end
 
 function Addon:UpdateNamePlateHealthColor(frame)
@@ -101,7 +111,8 @@ function Addon:UpdateNamePlateCastingBarTimer(frame, elapsed)
   if (not frame.timer) then
     frame.timer = frame:CreateFontString(nil);
     frame.timer:SetFontObject('GameFontHighlight');
-    frame.timer:SetPoint('TOP', frame.timer:GetParent(), 'BOTTOM', 0, -3);
+    -- frame.timer:SetShadowOffset(1, 1);
+    frame.timer:SetPoint('TOP', frame.timer:GetParent(), 'BOTTOM', 0, -5);
     frame.update = 0.1;
   else
     if (frame.update and frame.update < elapsed) then
@@ -121,20 +132,22 @@ function Addon:UpdateNamePlateCastingBarTimer(frame, elapsed)
 
   local r, g, b = frame:GetStatusBarColor();
   if (r > 0.7 and g > 0.7 and b > 0.7) then
-    frame:SetStatusBarColor(0.7, 0.1, 0.1);
+    frame:SetStatusBarColor(1.0, 0.2, 0.1, 1.0);
   end
 end
 
 function Addon:UpdateUnitPortrait(frame)
-  if (frame.portrait and UnitIsPlayer(frame.unit)) then
-    local tcoords = CLASS_ICON_TCOORDS[select(2, UnitClass(frame.unit))];
+  if (frame.portrait) then
+    if (UnitIsPlayer(frame.unit)) then
+      local tcoords = CLASS_ICON_TCOORDS[select(2, UnitClass(frame.unit))];
 
-    if (tcoords) then
-      frame.portrait:SetTexture('Interface\\TargetingFrame\\UI-Classes-Circles');
-      frame.portrait:SetTexCoord(unpack(tcoords));
+      if (tcoords) then
+        frame.portrait:SetTexture('Interface\\TargetingFrame\\UI-Classes-Circles');
+        frame.portrait:SetTexCoord(unpack(tcoords));
+      end
+    else
+      frame.portrait:SetTexCoord(0.0, 1.0, 0.0, 1.0);
     end
-  else
-    frame.portrait:SetTexCoord(0.0, 1.0, 0.0, 1.0);
   end
 end
 
@@ -196,7 +209,7 @@ function Addon:HookActionEvents()
   hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateNamePlateHealth);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateNamePlateHealthColor);
   hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateNamePlateHealthBorder);
-  -- hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
+  hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
 
   hooksecurefunc('UnitFramePortrait_Update', Frame_UpdateUnitPortrait);
   hooksecurefunc('TargetFrame_CheckLevel', Frame_CheckTargetLevel);
@@ -437,9 +450,12 @@ function Addon:PLAYER_LOGIN()
 
   local _, class = UnitClass('player');
   if (class == 'DEATHKNIGHT') then
+    RuneFrame:SetMovable(true);
     RuneFrame:ClearAllPoints();
     RuneFrame:SetPoint('CENTER', PlayerFrame, 'BOTTOM', 27, 0);
     RuneFrame:SetScale(1.3);
+    RuneFrame:SetUserPlaced(true);
+    RuneFrame:SetMovable(false);
   end
 
   -- set up alias reload slash command
