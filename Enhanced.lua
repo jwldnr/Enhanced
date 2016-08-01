@@ -18,8 +18,7 @@ local function SetNamePlateHealthValue(frame)
 end
 
 local function IsTanking(unit)
-  local isTanking = UnitDetailedThreatSituation('player', unit);
-  return isTanking;
+  return select(1, UnitDetailedThreatSituation('player', unit));
 end
 
 function Addon:Load()
