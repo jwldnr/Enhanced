@@ -33,25 +33,25 @@ function Addon:Load()
   end
 end
 
-function Addon:SetUpNamePlateFrame(frame)
+function Addon:SetUpNamePlateFrame(frame, setupOptions, frameOptions)
   frame.healthBar.background:SetTexture('Interface\\TargetingFrame\\UI-StatusBar');
   frame.healthBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
   frame.healthBar:SetStatusBarTexture('Interface\\TargetingFrame\\UI-StatusBar');
 
-  if (frame.castBar) then
-    frame.castBar.background:SetTexture('Interface\\TargetingFrame\\UI-StatusBar');
-    frame.castBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
-    frame.castBar:SetStatusBarTexture('Interface\\TargetingFrame\\UI-StatusBar');
+  frame.castBar.background:SetTexture('Interface\\TargetingFrame\\UI-StatusBar');
+  frame.castBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
+  frame.castBar:SetStatusBarTexture('Interface\\TargetingFrame\\UI-StatusBar');
 
-    --frame.castBar:SetStatusBarColor(1.0, 0.7, 0.0);
-    --frame.castBar.SetStatusBarColor = function () end
-  end
+  -- create a border just like the one from nameplate health bar
+  frame.castBar.border = CreateFrame('Frame', nil, frame.castBar, 'NamePlateFullBorderTemplate');
+  frame.castBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
+
+  frame.castBar.BorderShield:SetSize(20, 24);
+  -- TODO set frame.castBar.Icon size
 
   SetNamePlateHealthValue(frame);
 
-  if (frame.optionTable.showClassificationIndicator) then
-    frame.optionTable.showClassificationIndicator = false;
-  end
+  frame.classificationIndicator = nil;
 
   -- if (NamePlatePlayerResourceFrame) then
   -- local _, class = UnitClass('player');
@@ -92,15 +92,7 @@ end
 function Addon:UpdateNamePlateHealthBorder(frame)
   if (frame.optionTable.defaultBorderColor) then
     frame.healthBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
-
-    if (frame.castBar and not frame.castBar.barBorder) then
-      -- create a border just like the one from nameplate health bar
-      frame.castBar.barBorder = CreateFrame('Frame', nil, frame.castBar, 'NamePlateFullBorderTemplate');
-
-      frame.castBar.barBorder:SetVertexColor(0.0, 0.0, 0.0, 1.0);
-
-      frame.castBar.BorderShield:SetSize(20, 24);
-    end
+    frame.castBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
   end
 end
 
@@ -151,7 +143,7 @@ function Addon:CheckTargetLevel(frame)
   if (UnitCanAttack('player', frame.unit)) then
     local color = GetQuestDifficultyColor(targetLevel);
 
-    if (color.r == 1.0 and color.g == 0.82 and color.b == 0.0) then
+    if (color.r == 1.0 and color.g > 0.7 and color.b == 0.0) then
       frame.levelText:SetVertexColor(1.0, 1.0, 1.0);
     end
   else
@@ -167,8 +159,8 @@ function Addon:CheckTargetFaction(frame)
 end
 
 function Addon:HookActionEvents()
-  local function Frame_SetUpFrame(frame)
-    Addon:SetUpNamePlateFrame(frame);
+  local function Frame_SetUpFrame(frame, setupOptions, frameOptions)
+    Addon:SetUpNamePlateFrame(frame, setupOptions, frameOptions);
   end
 
   local function Frame_UpdateHealth(frame)
@@ -199,7 +191,7 @@ function Addon:HookActionEvents()
     Addon:CheckTargetFaction(frame);
   end
 
-  hooksecurefunc('CompactUnitFrame_SetUpFrame', Frame_SetUpFrame);
+  hooksecurefunc('DefaultCompactNamePlateFrameSetupInternal', Frame_SetUpFrame);
   hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateHealth);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateHealthColor);
   hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateHealthBorder);
