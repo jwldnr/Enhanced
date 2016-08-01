@@ -128,22 +128,20 @@ function Addon:UpdateNamePlateCastingBarTimer(frame, elapsed)
 
   local r, g, b = frame:GetStatusBarColor();
   if (r > 0.7 and g > 0.7 and b > 0.7) then
-    frame:SetStatusBarColor(0.5, 0.5, 0.5);
+    frame:SetStatusBarColor(0.7, 0.1, 0.1);
   end
 end
 
 function Addon:UpdateFramePortrait(frame)
-  if (frame.portrait) then
-    if (UnitIsPlayer(frame.unit)) then
-      local t = CLASS_ICON_TCOORDS[select(2, UnitClass(frame.unit))];
+  if (frame.portrait and UnitIsPlayer(frame.unit)) then
+    local tcoords = CLASS_ICON_TCOORDS[select(2, UnitClass(frame.unit))];
 
-      if (t) then
-        frame.portrait:SetTexture('Interface\\TargetingFrame\\UI-Classes-Circles');
-        frame.portrait:SetTexCoord(unpack(t));
-      end
-    else
-      frame.portrait:SetTexCoord(0.0, 1.0, 0.0, 1.0);
+    if (tcoords) then
+      frame.portrait:SetTexture('Interface\\TargetingFrame\\UI-Classes-Circles');
+      frame.portrait:SetTexCoord(unpack(tcoords));
     end
+  else
+    frame.portrait:SetTexCoord(0.0, 1.0, 0.0, 1.0);
   end
 end
 
