@@ -5,7 +5,7 @@ local _G = _G;
 local pairs = pairs;
 
 -- helper functions
-local function SetNamePlateHealthValue(frame)
+local function UpdateNamePlateHealthValue(frame)
   if (not frame.healthBar.value) then
     frame.healthBar.value = frame.healthBar:CreateFontString(nil, 'ARTWORK');
     frame.healthBar.value:SetPoint('LEFT', frame.healthBar.value:GetParent(), 'RIGHT', 7, 0);
@@ -33,7 +33,7 @@ function Addon:Load()
   end
 end
 
-function Addon:SetUpNamePlateFrame(frame, setupOptions, frameOptions)
+function Addon:SetupNamePlate(frame, setupOptions, frameOptions)
   frame.healthBar.background:SetTexture('Interface\\TargetingFrame\\UI-StatusBar');
   frame.healthBar.background:SetVertexColor(0.0, 0.0, 0.0, 0.2);
   frame.healthBar:SetStatusBarTexture('Interface\\TargetingFrame\\UI-StatusBar');
@@ -75,7 +75,7 @@ function Addon:SetUpNamePlateFrame(frame, setupOptions, frameOptions)
 end
 
 function Addon:UpdateNamePlateHealth(frame)
-  SetNamePlateHealthValue(frame);
+  self:UpdateNamePlateHealthValue(frame);
 end
 
 function Addon:UpdateNamePlateHealthColor(frame)
@@ -125,7 +125,7 @@ function Addon:UpdateNamePlateCastingBarTimer(frame, elapsed)
   end
 end
 
-function Addon:UpdateFramePortrait(frame)
+function Addon:UpdateUnitPortrait(frame)
   if (frame.portrait and UnitIsPlayer(frame.unit)) then
     local tcoords = CLASS_ICON_TCOORDS[select(2, UnitClass(frame.unit))];
 
@@ -160,19 +160,19 @@ function Addon:CheckTargetFaction(frame)
 end
 
 function Addon:HookActionEvents()
-  local function Frame_SetUpFrame(frame, setupOptions, frameOptions)
-    Addon:SetUpNamePlateFrame(frame, setupOptions, frameOptions);
+  local function Frame_SetupNamePlate(frame, setupOptions, frameOptions)
+    Addon:SetupNamePlate(frame, setupOptions, frameOptions);
   end
 
-  local function Frame_UpdateHealth(frame)
+  local function Frame_UpdateNamePlateHealth(frame)
     Addon:UpdateNamePlateHealth(frame);
   end
 
-  local function Frame_UpdateHealthColor(frame)
+  local function Frame_UpdateNamePlateHealthColor(frame)
     Addon:UpdateNamePlateHealthColor(frame);
   end
 
-  local function Frame_UpdateHealthBorder(frame)
+  local function Frame_UpdateNamePlateHealthBorder(frame)
     Addon:UpdateNamePlateHealthBorder(frame);
   end
 
@@ -180,30 +180,30 @@ function Addon:HookActionEvents()
     Addon:UpdateNamePlateCastingBarTimer(frame, elapsed);
   end
 
-  local function UnitFrame_PortraitUpdate(frame)
-    Addon:UpdateFramePortrait(frame);
+  local function Frame_UpdateUnitPortrait(frame)
+    Addon:UpdateUnitPortrait(frame);
   end
 
-  local function Target_CheckLevel(frame)
+  local function Frame_CheckTargetLevel(frame)
     Addon:CheckTargetLevel(frame);
   end
 
-  local function Target_CheckFaction(frame)
+  local function Frame_CheckTargetFaction(frame)
     Addon:CheckTargetFaction(frame);
   end
 
-  hooksecurefunc('DefaultCompactNamePlateFrameSetupInternal', Frame_SetUpFrame);
-  hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateHealth);
-  hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateHealthColor);
-  hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateHealthBorder);
+  hooksecurefunc('DefaultCompactNamePlateFrameSetupInternal', Frame_SetupNamePlate);
+  hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateNamePlateHealth);
+  hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateNamePlateHealthColor);
+  hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateNamePlateHealthBorder);
   -- hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
 
-  hooksecurefunc('UnitFramePortrait_Update', UnitFrame_PortraitUpdate);
-  hooksecurefunc('TargetFrame_CheckLevel', Target_CheckLevel);
-  hooksecurefunc('TargetFrame_CheckFaction', Target_CheckFaction);
+  hooksecurefunc('UnitFramePortrait_Update', Frame_UpdateUnitPortrait);
+  hooksecurefunc('TargetFrame_CheckLevel', Frame_CheckTargetLevel);
+  hooksecurefunc('TargetFrame_CheckFaction', Frame_CheckTargetFaction);
 
-  CastingBarFrame:HookScript('OnUpdate', UpdateNamePlateCastingBarTimer);
-  TargetFrameSpellBar:HookScript('OnUpdate', UpdateNamePlateCastingBarTimer);
+  CastingBarFrame:HookScript('OnUpdate', CastingBarFrame_Update);
+  TargetFrameSpellBar:HookScript('OnUpdate', CastingBarFrame_Update);
 end
 
 -- frame events
