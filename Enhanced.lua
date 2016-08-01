@@ -196,11 +196,14 @@ function Addon:HookActionEvents()
   hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateHealth);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateHealthColor);
   hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateHealthBorder);
-  hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
+  -- hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
 
   hooksecurefunc('UnitFramePortrait_Update', UnitFrame_PortraitUpdate);
   hooksecurefunc('TargetFrame_CheckLevel', Target_CheckLevel);
   hooksecurefunc('TargetFrame_CheckFaction', Target_CheckFaction);
+
+  CastingBarFrame:HookScript('OnUpdate', UpdateNamePlateCastingBarTimer);
+  TargetFrameSpellBar:HookScript('OnUpdate', UpdateNamePlateCastingBarTimer);
 end
 
 -- frame events
@@ -445,7 +448,11 @@ function Addon:PLAYER_LOGIN()
     ReloadUI();
   end
 
+  -- set console key
   SetConsoleKey('<');
+
+  -- set status text
+  SetCVar('statusText', '0');
 end
 
 -- load addon
