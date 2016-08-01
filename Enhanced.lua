@@ -80,6 +80,7 @@ end
 
 function Addon:UpdateNamePlateHealthColor(frame)
   if (UnitExists(frame.unit) and frame.isTanking or IsTanking(frame.displayedUnit)) then
+    -- desired tank nameplate health bar color
     local r, g, b = 1.0, 0.0, 1.0;
 
     if (r ~= frame.healthBar.r or g ~= frame.healthBar.g or b ~= frame.healthBar.b) then
