@@ -94,6 +94,7 @@ function Addon:UpdateNamePlateHealthBorder(frame)
     frame.healthBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
 
     if (frame.castBar and not frame.castBar.barBorder) then
+      -- create a border just like the one from nameplate health bar
       frame.castBar.barBorder = CreateFrame('Frame', nil, frame.castBar, 'NamePlateFullBorderTemplate');
 
       frame.castBar.barBorder:SetVertexColor(0.0, 0.0, 0.0, 1.0);
@@ -106,7 +107,7 @@ end
 function Addon:UpdateNamePlateCastingBarTimer(frame, elapsed)
   if (not frame.timer) then
     frame.timer = frame:CreateFontString(nil);
-    frame.timer:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
+    frame.timer:SetFontObject('GameFontHighlight');
     frame.timer:SetPoint('TOP', frame.timer:GetParent(), 'BOTTOM', 0, -3);
     frame.update = 0.1;
   else
