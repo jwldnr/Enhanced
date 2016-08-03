@@ -12,32 +12,8 @@ local print = print;
 local buttonFlash = {};
 
 -- helper functions
-local function UpdateNamePlateHealthValue(frame)
-  if (not frame.healthBar.value) then
-    frame.healthBar.value = frame.healthBar:CreateFontString(nil, 'ARTWORK');
-    frame.healthBar.value:SetFontObject('GameFontHighlight');
-    -- frame.healthBar.value:SetShadowOffset(1, 1);
-    frame.healthBar.value:SetPoint('LEFT', frame.healthBar.value:GetParent(), 'RIGHT', 7, 0);
-  else
-    local _, maxHealth = frame.healthBar:GetMinMaxValues();
-    local value = frame.healthBar:GetValue();
-    frame.healthBar.value:SetText(format(floor((value / maxHealth) * 100)) .. ' %');
-  end
-end
-
 local function IsTanking(unit)
   return select(1, UnitDetailedThreatSituation('player', unit));
-end
-
-local function AnimateButton(button)
-  if (not button:IsVisible()) then return end
-
-  buttonFlash.frame:SetFrameStrata(button:GetFrameStrata());
-  buttonFlash.frame:SetFrameLevel(button:GetFrameLevel() + 10);
-  buttonFlash.frame:SetAllPoints(button);
-
-  buttonFlash.animation:Stop();
-  buttonFlash.animation:Play();
 end
 
 function Addon:Load()
@@ -49,6 +25,19 @@ function Addon:Load()
 
     eventHandler:RegisterEvent('ADDON_LOADED');
     eventHandler:RegisterEvent('PLAYER_LOGIN');
+  end
+end
+
+function Addon:UpdateNamePlateHealthValue(frame)
+  if (not frame.healthBar.value) then
+    frame.healthBar.value = frame.healthBar:CreateFontString(nil, 'ARTWORK');
+    frame.healthBar.value:SetFontObject('GameFontHighlight');
+    -- frame.healthBar.value:SetShadowOffset(1, 1);
+    frame.healthBar.value:SetPoint('LEFT', frame.healthBar.value:GetParent(), 'RIGHT', 7, 0);
+  else
+    local _, maxHealth = frame.healthBar:GetMinMaxValues();
+    local value = frame.healthBar:GetValue();
+    frame.healthBar.value:SetText(format(floor((value / maxHealth) * 100)) .. ' %');
   end
 end
 
@@ -70,7 +59,7 @@ function Addon:SetupNamePlate(frame, setupOptions, frameOptions)
   -- frame.castBar.Icon:SetSize(50, 50);
   -- TODO set frame.castBar.Icon size
 
-  UpdateNamePlateHealthValue(frame);
+  self:UpdateNamePlateHealthValue(frame);
 
   if (frame.optionTable.showClassificationIndicator) then
     frame.optionTable.showClassificationIndicator = nil;
@@ -98,7 +87,7 @@ function Addon:SetupNamePlate(frame, setupOptions, frameOptions)
 end
 
 function Addon:UpdateNamePlateHealth(frame)
-  UpdateNamePlateHealthValue(frame);
+  self:UpdateNamePlateHealthValue(frame);
 end
 
 function Addon:UpdateNamePlateHealthColor(frame)
@@ -212,12 +201,25 @@ function Addon:ActionButtonDown(id)
   end
 
   if not button then return end
-  AnimateButton(button);
+  self:AnimateButton(button);
 end
 
 function Addon:MultiActionButtonDown(bar, id)
   local button = _G[bar..'Button'..id];
-  AnimateButton(button);
+  self:AnimateButton(button);
+end
+
+function Addon:AnimateButton(button)
+  if (not button:IsVisible()) then return end
+
+  buttonFlash.frame:SetFrameStrata(button:GetFrameStrata());
+  buttonFlash.frame:SetFrameLevel(button:GetFrameLevel() + 1);
+  buttonFlash.frame:SetPoint("TOPLEFT", button ,"TOPLEFT", -10, 10)
+  buttonFlash.frame:SetPoint("BOTTOMRIGHT", button ,"BOTTOMRIGHT", 10, -10)
+  -- buttonFlash.frame:SetAllPoints(button);
+
+  buttonFlash.animation:Stop();
+  buttonFlash.animation:Play();
 end
 
 function Addon:UpdateActionButton(button)
