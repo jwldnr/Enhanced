@@ -9,6 +9,8 @@ local max = math.max;
 local floor = math.floor;
 local print = print;
 
+local buttonFlash = {};
+
 -- helper functions
 local function UpdateNamePlateHealthValue(frame)
   if (not frame.healthBar.value) then
@@ -25,6 +27,17 @@ end
 
 local function IsTanking(unit)
   return select(1, UnitDetailedThreatSituation('player', unit));
+end
+
+local function AnimateButton(button)
+  if (not button:IsVisible()) then return end
+
+  buttonFlash.frame:SetFrameStrata(button:GetFrameStrata());
+  buttonFlash.frame:SetFrameLevel(button:GetFrameLevel() + 10);
+  buttonFlash.frame:SetAllPoints(button);
+
+  buttonFlash.animation:Stop();
+  buttonFlash.animation:Play();
 end
 
 function Addon:Load()
@@ -172,6 +185,48 @@ function Addon:CheckTargetFaction(frame)
   end
 end
 
+function Addon:ActionButtonDown(id)
+  local button;
+
+  if (C_PetBattles.IsInBattle()) then
+    if (PetBattleFrame) then
+      if (id > NUM_BATTLE_PET_HOTKEYS) then return end
+
+      button = PetBattleFrame.BottomFrame.abilityButtons[id];
+      if (id == BATTLE_PET_ABILITY_SWITCH) then
+        button = PetBattleFrame.BottomFrame.SwitchPetButton;
+      elseif (id == BATTLE_PET_ABILITY_CATCH) then
+        button = PetBattleFrame.BottomFrame.CatchButton;
+      end
+
+      if (not button) then return end
+    end
+  end
+
+  if (OverrideActionBar and OverrideActionBar:IsShown()) then
+    if (id > NUM_OVERRIDE_BUTTONS) then return end
+
+    button = _G['OverrideActionBarButton'..id];
+  else
+    button = _G['ActionButton'..id];
+  end
+
+  if not button then return end
+  AnimateButton(button);
+end
+
+function Addon:MultiActionButtonDown(bar, id)
+  local button = _G[bar..'Button'..id];
+  AnimateButton(button);
+end
+
+function Addon:UpdateActionButton(button)
+  local texture = button:GetPushedTexture();
+  if (texture ~= nil) then
+    button:SetPushedTexture(nil);
+  end
+end
+
 function Addon:HookActionEvents()
   local function Frame_SetupNamePlate(frame, setupOptions, frameOptions)
     Addon:SetupNamePlate(frame, setupOptions, frameOptions);
@@ -205,6 +260,18 @@ function Addon:HookActionEvents()
     Addon:CheckTargetFaction(frame);
   end
 
+  local function Button_ActionButtonDown(id)
+    Addon:ActionButtonDown(id);
+  end
+
+  local function Button_MultiActionButtonDown(bar, id)
+    Addon:MultiActionButtonDown(bar, id);
+  end
+
+  local function Button_UpdateActionButton(button)
+    Addon:UpdateActionButton(button);
+  end
+
   hooksecurefunc('DefaultCompactNamePlateFrameSetupInternal', Frame_SetupNamePlate);
   hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateNamePlateHealth);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateNamePlateHealthColor);
@@ -217,6 +284,10 @@ function Addon:HookActionEvents()
 
   CastingBarFrame:HookScript('OnUpdate', CastingBarFrame_Update);
   TargetFrameSpellBar:HookScript('OnUpdate', CastingBarFrame_Update);
+
+  hooksecurefunc('ActionButtonDown', Button_ActionButtonDown);
+  hooksecurefunc('MultiActionButtonDown', Button_MultiActionButtonDown);
+  hooksecurefunc('ActionButton_OnUpdate', Button_UpdateActionButton);
 end
 
 -- frame events
@@ -248,6 +319,36 @@ end
 
 function Addon:PLAYER_LOGIN()
   self:HookActionEvents();
+
+  -- set up button flash frame/animation
+  buttonFlash.frame = CreateFrame('Frame', nil);
+  local texture = buttonFlash.frame:CreateTexture();
+  texture:SetTexture('Interface\\Cooldown\\star4');
+  texture:SetAlpha(0);
+  texture:SetAllPoints();
+  texture:SetBlendMode('ADD');
+
+  buttonFlash.animation = texture:CreateAnimationGroup();
+  local alpha1 = buttonFlash.animation:CreateAnimation('Alpha');
+  alpha1:SetFromAlpha(0);
+  alpha1:SetToAlpha(1);
+  alpha1:SetDuration(0);
+  alpha1:SetOrder(1);
+
+  local scale1 = buttonFlash.animation:CreateAnimation('Scale');
+  scale1:SetScale(1.5, 1.5);
+  scale1:SetDuration(0);
+  scale1:SetOrder(1);
+
+  local scale2 = buttonFlash.animation:CreateAnimation('Scale');
+  scale2:SetScale(0, 0);
+  scale2:SetDuration(0.3);
+  scale2:SetOrder(2);
+
+  local rotation2 = buttonFlash.animation:CreateAnimation('Rotation');
+  rotation2:SetDegrees(90);
+  rotation2:SetDuration(0.3);
+  rotation2:SetOrder(2);
 
   for i, v in pairs({
       -- unit frames
@@ -464,11 +565,11 @@ function Addon:PLAYER_LOGIN()
     ReloadUI();
   end
 
-  -- set console key
-  SetConsoleKey('<');
-
   -- set status text
   SetCVar('statusText', '0');
+
+  -- ensure key press on key down
+  SetCVar('ActionButtonUseKeyDown', '1');
 end
 
 -- load addon
