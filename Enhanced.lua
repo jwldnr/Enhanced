@@ -216,7 +216,7 @@ function Addon:AnimateButton(button)
   buttonFlash.frame:SetPoint('BOTTOMRIGHT', button ,'BOTTOMRIGHT', 3, -3);
 
   -- buttonFlash.frame:SetFrameStrata(button:GetFrameStrata());
-  buttonFlash.frame:SetFrameStrata('high');
+  buttonFlash.frame:SetFrameStrata('HIGH');
   buttonFlash.frame:SetFrameLevel(button:GetFrameLevel() + 1);
   -- buttonFlash.frame:SetAllPoints(button);
 
