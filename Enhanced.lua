@@ -212,10 +212,12 @@ end
 function Addon:AnimateButton(button)
   if (not button:IsVisible()) then return end
 
-  buttonFlash.frame:SetFrameStrata(button:GetFrameStrata());
+  buttonFlash.frame:SetPoint('TOPLEFT', button ,'TOPLEFT', -3, 3);
+  buttonFlash.frame:SetPoint('BOTTOMRIGHT', button ,'BOTTOMRIGHT', 3, -3);
+
+  -- buttonFlash.frame:SetFrameStrata(button:GetFrameStrata());
+  buttonFlash.frame:SetFrameStrata('high');
   buttonFlash.frame:SetFrameLevel(button:GetFrameLevel() + 1);
-  buttonFlash.frame:SetPoint("TOPLEFT", button ,"TOPLEFT", -10, 10)
-  buttonFlash.frame:SetPoint("BOTTOMRIGHT", button ,"BOTTOMRIGHT", 10, -10)
   -- buttonFlash.frame:SetAllPoints(button);
 
   buttonFlash.animation:Stop();
@@ -327,7 +329,7 @@ function Addon:PLAYER_LOGIN()
   local texture = buttonFlash.frame:CreateTexture();
   texture:SetTexture('Interface\\Cooldown\\star4');
   texture:SetAlpha(0);
-  texture:SetAllPoints();
+  texture:SetAllPoints(buttonFlash.frame);
   texture:SetBlendMode('ADD');
 
   buttonFlash.animation = texture:CreateAnimationGroup();
