@@ -209,7 +209,7 @@ function Addon:HookActionEvents()
   hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateNamePlateHealth);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateNamePlateHealthColor);
   hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateNamePlateHealthBorder);
-  hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
+  -- hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
 
   hooksecurefunc('UnitFramePortrait_Update', Frame_UpdateUnitPortrait);
   hooksecurefunc('TargetFrame_CheckLevel', Frame_CheckTargetLevel);
