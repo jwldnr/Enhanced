@@ -55,9 +55,7 @@ function Addon:SetupNamePlate(frame, setupOptions, frameOptions)
   frame.castBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
 
   frame.castBar.BorderShield:SetSize(20, 24);
-
-  -- frame.castBar.Icon:SetSize(50, 50);
-  -- TODO set frame.castBar.Icon size
+  frame.castBar.Icon:SetSize(24, 24);
 
   self:UpdateNamePlateHealthValue(frame);
 
@@ -217,7 +215,7 @@ function Addon:AnimateButton(button)
 
   -- buttonFlash.frame:SetFrameStrata(button:GetFrameStrata());
   buttonFlash.frame:SetFrameStrata('HIGH');
-  buttonFlash.frame:SetFrameLevel(button:GetFrameLevel() + 1);
+  buttonFlash.frame:SetFrameLevel(button:GetFrameLevel());
   -- buttonFlash.frame:SetAllPoints(button);
 
   buttonFlash.animation:Stop();
@@ -331,6 +329,7 @@ function Addon:PLAYER_LOGIN()
   texture:SetAlpha(0);
   texture:SetAllPoints(buttonFlash.frame);
   texture:SetBlendMode('ADD');
+  texture:SetDrawLayer('BACKGROUND', 7);
 
   buttonFlash.animation = texture:CreateAnimationGroup();
   local alpha1 = buttonFlash.animation:CreateAnimation('Alpha');
