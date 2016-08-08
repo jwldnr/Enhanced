@@ -4,9 +4,7 @@ local AddonName, Addon = ...;
 local _G = _G;
 local pairs = pairs;
 local unpack = unpack;
-local format = string.format;
 local max = math.max;
-local floor = math.floor;
 local ceil = math.ceil;
 local print = print;
 
@@ -69,7 +67,7 @@ function Addon:SetupNamePlate(frame, setupOptions, frameOptions)
     frame.healthBar.healthText = frame.healthBar:CreateFontString(nil, 'ARTWORK');
     -- frame.healthBar.healthText:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
     frame.healthBar.healthText:SetFontObject('GameFontHighlight');
-    frame.healthBar.healthText:SetPoint('LEFT', frame.healthBar.healthText:GetParent(), 'RIGHT', 7, 0);
+    frame.healthBar.healthText:SetPoint('LEFT', frame.healthBar, 'RIGHT', 7, 0);
 
     frame:HookScript('OnShow', ShowHealthText);
     frame:HookScript('OnHide', HideHealthText);
@@ -120,31 +118,51 @@ function Addon:UpdateNamePlateHealthBorder(frame)
   end
 end
 
-function Addon:UpdateNamePlateCastingBarTimer(frame, elapsed)
-  if (not frame.timer) then
-    frame.timer = frame:CreateFontString(nil);
-    frame.timer:SetFontObject('GameFontHighlight');
-    -- frame.timer:SetShadowOffset(1, 1);
-    frame.timer:SetPoint('TOP', frame.timer:GetParent(), 'BOTTOM', 0, -5);
-    frame.update = 0.1;
-  else
-    if (frame.update and frame.update < elapsed) then
-      if (frame.casting) then
-        frame.timer:SetText(format('%2.1f/%1.1f', max(frame.maxValue - frame.value, 0), frame.maxValue));
-      elseif (frame.channeling) then
-        frame.timer:SetText(format('%.1f', max(frame.value, 0)));
-      else
-        frame.timer:SetText(nil);
-      end
+function Addon:LoadCastingBar(frame, unit, showTradeSkills, showShield)
+  if (not frame.text) then
+    frame.text = frame:CreateFontString(nil, 'ARTWORK');
+    -- frame.castBar.castText:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
+    frame.text:SetFontObject('GameFontHighlight');
+    frame.text:SetPoint('LEFT', frame, 'RIGHT', 7, 0);
 
-      frame.update = 0.1;
-    else
-      frame.update = frame.update - elapsed;
+    -- frame:HookScript('OnShow', ShowCastBarText);
+    -- frame:HookScript('OnHide', HideCastBarText);
+
+    frame.update = 0.2;
+  end
+end
+
+function Addon:UpdateCastingBarText(frame)
+  if (frame.casting) then
+    frame.castText:SetFormattedText('%2.1f/%1.1f', max(frame.maxValue - frame.value, 0), frame.maxValue);
+  elseif (frame.channeling) then
+    frame.castText:SetFormattedText('%.1f', max(frame.value, 0));
+  else
+    frame.castText:SetText(nil);
+  end
+end
+
+function Addon:UpdateCastingBarTimer(frame, elapsed)
+  if (not frame.castText) then
+    frame.castText = frame:CreateFontString(nil, 'ARTWORK');
+    -- frame.castBar.castText:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
+    frame.castText:SetFontObject('GameFontHighlight');
+    frame.castText:SetPoint('TOP', frame, 'BOTTOM', 0, -5);
+
+    frame.update = 0.2;
+  else
+    if (frame.update) then
+      frame.update = frame.update + elapsed;
+
+      if (frame.update > 0.2) then
+        frame.update = 0;
+        self:UpdateCastingBarText(frame);
+      end
     end
   end
 
   local r, g, b = frame:GetStatusBarColor();
-  if (r > 0.7 and g > 0.7 and b > 0.7) then
+  if (r > 0.5 and g > 0.5 and b > 0.5) then
     frame:SetStatusBarColor(1.0, 0.2, 0.1, 1.0);
   end
 end
@@ -263,8 +281,12 @@ function Addon:HookActionEvents()
     Addon:UpdateNamePlateHealthBorder(frame);
   end
 
+  local function Frame_LoadCastingBar(frame, unit, showTradeSkills, showShield)
+    Addon:LoadCastingBar(frame, unit, showTradeSkills, showShield);
+  end
+
   local function CastingBarFrame_Update(frame, elapsed)
-    Addon:UpdateNamePlateCastingBarTimer(frame, elapsed);
+    Addon:UpdateCastingBarTimer(frame, elapsed);
   end
 
   local function Frame_UpdateUnitPortrait(frame)
@@ -296,6 +318,7 @@ function Addon:HookActionEvents()
   -- hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateHealthText);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateNamePlateHealthColor);
   hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateNamePlateHealthBorder);
+
   -- hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
 
   hooksecurefunc('UnitFramePortrait_Update', Frame_UpdateUnitPortrait);
