@@ -14,7 +14,7 @@ function Addon:Buffs()
 end
 
 function Addon:TrackTidalWaves()
-  local frame = CreateFrame('FRAME');
+  local eventHandler = CreateFrame('FRAME', nil);
   local buffName = 'Tidal Waves';
 
   frame.timer = SpellActivationOverlayFrame:CreateFontString(nil);
@@ -42,7 +42,7 @@ function Addon:TrackTidalWaves()
   frame:SetScript('OnEvent', function(self, event, ...)
     local unit = ...;
 
-    if (unit ~= 'player') then return end;
+    if (unit ~= 'player') then return end
 
     if (event == 'UNIT_AURA') then
       local name, _, _, count, _, _, expirationTime, _, _, _ = UnitBuff('player', buffName);

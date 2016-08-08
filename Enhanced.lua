@@ -30,11 +30,12 @@ function Addon:Load()
 
     -- set OnEvent handler
     eventHandler:SetScript('OnEvent', function(handler, event, ...)
-        self:OnEvent(event);
+        self:OnEvent(event, ...);
       end)
 
     eventHandler:RegisterEvent('ADDON_LOADED');
     eventHandler:RegisterEvent('PLAYER_LOGIN');
+    eventHandler:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED');
   end
 end
 
@@ -52,28 +53,23 @@ function Addon:SetupNamePlate(frame, setupOptions, frameOptions)
   frame.castBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
 
   frame.castBar.BorderShield:SetSize(20, 24);
-  frame.castBar.BorderShield:ClearAllPoints();
-  frame.castBar.BorderShield:SetPoint('RIGHT', frame.castBar, 'LEFT', 0, 0);
-
-  frame.castBar.Icon:SetSize(20, 20);
-  frame.castBar.Icon:ClearAllPoints();
-  frame.castBar.Icon:SetPoint('RIGHT', frame.castBar, 'LEFT', 0, 0);
+  -- frame.castBar.Icon:SetSize(20, 20);
 
   if (frame.optionTable.showClassificationIndicator) then
     frame.optionTable.showClassificationIndicator = nil;
   end
 
-  if (not frame.healthBar.healthText) then
-    frame.healthBar.healthText = frame.healthBar:CreateFontString(nil, 'ARTWORK');
-    -- frame.healthBar.healthText:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
-    frame.healthBar.healthText:SetFontObject('GameFontHighlight');
-    frame.healthBar.healthText:SetPoint('LEFT', frame.healthBar, 'RIGHT', 7, 0);
-
-    frame:HookScript('OnShow', ShowHealthText);
-    frame:HookScript('OnHide', HideHealthText);
-
-    frame.healthBar.update = 0.5;
-  end
+  -- if (not frame.healthBar.healthText) then
+  --   frame.healthBar.healthText = frame.healthBar:CreateFontString(nil, 'ARTWORK');
+  --   -- frame.healthBar.healthText:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
+  --   frame.healthBar.healthText:SetFontObject('GameFontHighlight');
+  --   frame.healthBar.healthText:SetPoint('LEFT', frame.healthBar, 'RIGHT', 7, 0);
+  --
+  --   -- frame:HookScript('OnShow', ShowHealthText);
+  --   -- frame:HookScript('OnHide', HideHealthText);
+  --
+  --   frame.healthBar.update = 0.5;
+  -- end
 end
 
 function Addon:UpdateNamePlate(frame, elapsed)
@@ -314,7 +310,7 @@ function Addon:HookActionEvents()
   end
 
   hooksecurefunc('DefaultCompactNamePlateFrameSetupInternal', Frame_SetupNamePlate);
-  hooksecurefunc('CompactUnitFrame_OnUpdate', Frame_NamePlateOnUpdate);
+  -- hooksecurefunc('CompactUnitFrame_OnUpdate', Frame_NamePlateOnUpdate);
   -- hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateHealthText);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateNamePlateHealthColor);
   hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateNamePlateHealthBorder);
@@ -342,7 +338,7 @@ function Addon:OnEvent(event, ...)
   end
 end
 
-function Addon:ADDON_LOADED(self, event, ...)
+function Addon:ADDON_LOADED(event, ...)
   local addonName = ...;
 
   if (addonName and addonName == 'Blizzard_CombatText') then
@@ -614,6 +610,81 @@ function Addon:PLAYER_LOGIN()
 
   -- ensure key press on key down
   SetCVar('ActionButtonUseKeyDown', '1');
+
+  -- self:UpdateTrackingBuffs();
+end
+
+function Addon:PLAYER_SPECIALIZATION_CHANGED(event, ...)
+  if (event == 'PLAYER_SPECIALIZATION_CHANGED') then
+    local unit = ...;
+
+    if (unit ~= 'player') then return end
+
+    self:UpdateTrackingBuffs();
+  end
+end
+
+function Addon:UpdateTrackingBuffs()
+  local _, class = UnitClass('player');
+  if (class == 'PALADIN') then
+    local specIndex = GetSpecialization();
+    local specName = specIndex and select(2, GetSpecializationInfo(specIndex)) or 'NONE';
+
+    if (specName == 'Holy') then
+      local eventHandler = CreateFrame('FRAME', nil);
+
+      eventHandler.duration = SpellActivationOverlayFrame:CreateFontString(nil);
+      eventHandler.duration:SetFont(STANDARD_TEXT_FONT, 22, 'OUTLINE');
+      eventHandler.duration:SetPoint('CENTER', SpellActivationOverlayFrame, 'TOP', 0, 0);
+
+      eventHandler.interval = 1.0;
+
+      local function UpdateDurationText(frame)
+        if (not frame.duration) then return end
+
+        local buff, _, _, count, _, _, expirationTime, _, _, _ = UnitBuff('player', 'Fervent Martyr');
+        if (buff and count == 2) then
+          frame.duration:SetFormattedText('%.0f s', math.floor(expirationTime - GetTime()));
+        end
+      end
+
+      local function UnitAura_OnUpdate(frame, elapsed)
+        if (frame.interval) then
+          frame.interval = frame.interval + elapsed;
+
+          if (frame.interval > 1.0) then
+            frame.interval = 0;
+            UpdateDurationText(frame);
+          end
+        end
+      end
+
+      local function UnitAura_OnEvent(frame, event, ...)
+        if (event == 'UNIT_AURA') then
+          local buff, _, _, count, _, _, expirationTime, _, _, _ = UnitBuff('player', 'Fervent Martyr');
+          if (buff and count == 2) then
+            SpellActivationOverlay_ShowOverlay(SpellActivationOverlayFrame, 196923, 'TEXTURES\\SPELLACTIVATIONOVERLAYS\\generictop_01.BLP', 'TOP', 1.0, 255, 255, 0, false, false);
+            SpellActivationOverlayFrame:SetAlpha(1.0);
+            -- SpellActivationOverlayFrame.SetAlpha = function() end;
+
+            frame.duration:Show();
+
+            frame:SetScript('OnUpdate', UnitAura_OnUpdate);
+          else
+            SpellActivationOverlay_HideOverlays(SpellActivationOverlayFrame, 196923);
+
+            frame.duration:Hide();
+
+            frame:SetScript('OnUpdate', nil);
+          end
+        end
+      end
+
+      eventHandler:SetScript('OnEvent', UnitAura_OnEvent);
+
+      eventHandler:RegisterEvent('UNIT_AURA');
+    end
+  end
 end
 
 -- load addon
