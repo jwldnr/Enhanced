@@ -15,15 +15,6 @@ local function IsTanking(unit)
   return select(1, UnitDetailedThreatSituation('player', unit));
 end
 
-local function ShowHealthText(frame)
-  Addon:UpdateHealthText(frame);
-end
-
-local function HideHealthText(frame)
-  frame.healthBar.healthText:SetText(nil);
-  frame.healthBar.healthText:Hide();
-end
-
 function Addon:Load()
   do
     local eventHandler = CreateFrame('Frame', nil);
@@ -33,9 +24,7 @@ function Addon:Load()
         self:OnEvent(event, ...);
       end)
 
-    eventHandler:RegisterEvent('ADDON_LOADED');
     eventHandler:RegisterEvent('PLAYER_LOGIN');
-    eventHandler:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED');
   end
 end
 
@@ -52,46 +41,11 @@ function Addon:SetupNamePlate(frame, setupOptions, frameOptions)
   frame.castBar.border = CreateFrame('Frame', nil, frame.castBar, 'NamePlateFullBorderTemplate');
   frame.castBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
 
-  frame.castBar.BorderShield:SetSize(20, 24);
+  -- frame.castBar.BorderShield:SetSize(20, 24);
   -- frame.castBar.Icon:SetSize(20, 20);
 
   if (frame.optionTable.showClassificationIndicator) then
     frame.optionTable.showClassificationIndicator = nil;
-  end
-
-  -- if (not frame.healthBar.healthText) then
-  --   frame.healthBar.healthText = frame.healthBar:CreateFontString(nil, 'ARTWORK');
-  --   -- frame.healthBar.healthText:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
-  --   frame.healthBar.healthText:SetFontObject('GameFontHighlight');
-  --   frame.healthBar.healthText:SetPoint('LEFT', frame.healthBar, 'RIGHT', 7, 0);
-  --
-  --   -- frame:HookScript('OnShow', ShowHealthText);
-  --   -- frame:HookScript('OnHide', HideHealthText);
-  --
-  --   frame.healthBar.update = 0.5;
-  -- end
-end
-
-function Addon:UpdateNamePlate(frame, elapsed)
-  if (frame.healthBar.update) then
-    frame.healthBar.update = frame.healthBar.update + elapsed;
-
-    if (frame.healthBar.update > 0.5) then
-      frame.healthBar.update = 0;
-      self:UpdateHealthText(frame);
-    end
-  end
-end
-
-function Addon:UpdateHealthText(frame)
-  if (not frame.healthBar.healthText) then return end
-
-  if (UnitHealthMax(frame.displayedUnit) > 0) then
-    local percent = ceil(100 * (UnitHealth(frame.displayedUnit) / UnitHealthMax(frame.displayedUnit)));
-    frame.healthBar.healthText:SetFormattedText("%d%%", percent);
-    frame.healthBar.healthText:Show();
-  else
-    frame.healthBar.healthText:Hide();
   end
 end
 
@@ -111,20 +65,6 @@ function Addon:UpdateNamePlateHealthBorder(frame)
   if (frame.optionTable.defaultBorderColor) then
     frame.healthBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
     frame.castBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
-  end
-end
-
-function Addon:LoadCastingBar(frame, unit, showTradeSkills, showShield)
-  if (not frame.text) then
-    frame.text = frame:CreateFontString(nil, 'ARTWORK');
-    -- frame.castBar.castText:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
-    frame.text:SetFontObject('GameFontHighlight');
-    frame.text:SetPoint('LEFT', frame, 'RIGHT', 7, 0);
-
-    -- frame:HookScript('OnShow', ShowCastBarText);
-    -- frame:HookScript('OnHide', HideCastBarText);
-
-    frame.update = 0.2;
   end
 end
 
@@ -155,11 +95,6 @@ function Addon:UpdateCastingBarTimer(frame, elapsed)
         self:UpdateCastingBarText(frame);
       end
     end
-  end
-
-  local r, g, b = frame:GetStatusBarColor();
-  if (r > 0.5 and g > 0.5 and b > 0.5) then
-    frame:SetStatusBarColor(1.0, 0.2, 0.1, 1.0);
   end
 end
 
@@ -261,24 +196,12 @@ function Addon:HookActionEvents()
     Addon:SetupNamePlate(frame, setupOptions, frameOptions);
   end
 
-  local function Frame_NamePlateOnUpdate(frame, elapsed)
-    Addon:UpdateNamePlate(frame, elapsed);
-  end
-
-  local function Frame_UpdateHealthText(frame, ...)
-    Addon:UpdateHealthText(frame);
-  end
-
   local function Frame_UpdateNamePlateHealthColor(frame)
     Addon:UpdateNamePlateHealthColor(frame);
   end
 
   local function Frame_UpdateNamePlateHealthBorder(frame)
     Addon:UpdateNamePlateHealthBorder(frame);
-  end
-
-  local function Frame_LoadCastingBar(frame, unit, showTradeSkills, showShield)
-    Addon:LoadCastingBar(frame, unit, showTradeSkills, showShield);
   end
 
   local function CastingBarFrame_Update(frame, elapsed)
@@ -310,12 +233,8 @@ function Addon:HookActionEvents()
   end
 
   hooksecurefunc('DefaultCompactNamePlateFrameSetupInternal', Frame_SetupNamePlate);
-  -- hooksecurefunc('CompactUnitFrame_OnUpdate', Frame_NamePlateOnUpdate);
-  -- hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateHealthText);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateNamePlateHealthColor);
   hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateNamePlateHealthBorder);
-
-  -- hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
 
   hooksecurefunc('UnitFramePortrait_Update', Frame_UpdateUnitPortrait);
   hooksecurefunc('TargetFrame_CheckLevel', Frame_CheckTargetLevel);
@@ -335,24 +254,6 @@ function Addon:OnEvent(event, ...)
 
   if (action) then
     action(self, event, ...);
-  end
-end
-
-function Addon:ADDON_LOADED(event, ...)
-  local addonName = ...;
-
-  if (addonName and addonName == 'Blizzard_CombatText') then
-    COMBAT_TEXT_TYPE_INFO['PERIODIC_HEAL'] = { var = nil, show = nil };
-    COMBAT_TEXT_TYPE_INFO['HEAL_CRIT'] = { var = nil, show = nil };
-    COMBAT_TEXT_TYPE_INFO['HEAL'] = { var = nil, show = nil };
-    COMBAT_TEXT_TYPE_INFO['PERIODIC_HEAL_ABSORB'] = { var = nil, show = nil };
-    COMBAT_TEXT_TYPE_INFO['HEAL_CRIT_ABSORB'] = { var = nil, show = nil };
-    COMBAT_TEXT_TYPE_INFO['HEAL_ABSORB'] = { var = nil, show = nil };
-
-    COMBAT_TEXT_TYPE_INFO['DAMAGE_CRIT'] = { var = nil, show = nil };
-    COMBAT_TEXT_TYPE_INFO['DAMAGE'] = { var = nil, show = nil };
-    COMBAT_TEXT_TYPE_INFO['SPELL_DAMAGE_CRIT'] = { var = nil, show = nil };
-    COMBAT_TEXT_TYPE_INFO['SPELL_DAMAGE'] = { var = nil, show = nil };
   end
 end
 
@@ -577,28 +478,6 @@ function Addon:PLAYER_LOGIN()
     v.Show = function() end
   end
 
-  -- adjust the player and target cast bar scale
-  -- CastingBarFrame:SetScale(1.2);
-  TargetFrameSpellBar:SetScale(1.2);
-
-  -- disable damage on player frame
-  PlayerHitIndicator:SetText(nil);
-  PlayerHitIndicator.SetText = function() end
-
-  -- disable damage on player pet frame
-  PetHitIndicator:SetText(nil);
-  PetHitIndicator.SetText = function() end
-
-  local _, class = UnitClass('player');
-  if (class == 'DEATHKNIGHT') then
-    RuneFrame:SetMovable(true);
-    RuneFrame:ClearAllPoints();
-    RuneFrame:SetPoint('CENTER', PlayerFrame, 'BOTTOM', 27, 0);
-    RuneFrame:SetScale(1.3);
-    RuneFrame:SetUserPlaced(true);
-    RuneFrame:SetMovable(false);
-  end
-
   -- set up alias reload slash command
   SLASH_RL1 = '/rl';
   function SlashCmdList.RL(msg, editbox)
@@ -610,81 +489,6 @@ function Addon:PLAYER_LOGIN()
 
   -- ensure key press on key down
   SetCVar('ActionButtonUseKeyDown', '1');
-
-  -- self:UpdateTrackingBuffs();
-end
-
-function Addon:PLAYER_SPECIALIZATION_CHANGED(event, ...)
-  if (event == 'PLAYER_SPECIALIZATION_CHANGED') then
-    local unit = ...;
-
-    if (unit ~= 'player') then return end
-
-    self:UpdateTrackingBuffs();
-  end
-end
-
-function Addon:UpdateTrackingBuffs()
-  local _, class = UnitClass('player');
-  if (class == 'PALADIN') then
-    local specIndex = GetSpecialization();
-    local specName = specIndex and select(2, GetSpecializationInfo(specIndex)) or 'NONE';
-
-    if (specName == 'Holy') then
-      local eventHandler = CreateFrame('FRAME', nil);
-
-      eventHandler.duration = SpellActivationOverlayFrame:CreateFontString(nil);
-      eventHandler.duration:SetFont(STANDARD_TEXT_FONT, 22, 'OUTLINE');
-      eventHandler.duration:SetPoint('CENTER', SpellActivationOverlayFrame, 'TOP', 0, 0);
-
-      eventHandler.interval = 1.0;
-
-      local function UpdateDurationText(frame)
-        if (not frame.duration) then return end
-
-        local buff, _, _, count, _, _, expirationTime, _, _, _ = UnitBuff('player', 'Fervent Martyr');
-        if (buff and count == 2) then
-          frame.duration:SetFormattedText('%.0f s', math.floor(expirationTime - GetTime()));
-        end
-      end
-
-      local function UnitAura_OnUpdate(frame, elapsed)
-        if (frame.interval) then
-          frame.interval = frame.interval + elapsed;
-
-          if (frame.interval > 1.0) then
-            frame.interval = 0;
-            UpdateDurationText(frame);
-          end
-        end
-      end
-
-      local function UnitAura_OnEvent(frame, event, ...)
-        if (event == 'UNIT_AURA') then
-          local buff, _, _, count, _, _, expirationTime, _, _, _ = UnitBuff('player', 'Fervent Martyr');
-          if (buff and count == 2) then
-            SpellActivationOverlay_ShowOverlay(SpellActivationOverlayFrame, 196923, 'TEXTURES\\SPELLACTIVATIONOVERLAYS\\generictop_01.BLP', 'TOP', 1.0, 255, 255, 0, false, false);
-            SpellActivationOverlayFrame:SetAlpha(1.0);
-            -- SpellActivationOverlayFrame.SetAlpha = function() end;
-
-            frame.duration:Show();
-
-            frame:SetScript('OnUpdate', UnitAura_OnUpdate);
-          else
-            SpellActivationOverlay_HideOverlays(SpellActivationOverlayFrame, 196923);
-
-            frame.duration:Hide();
-
-            frame:SetScript('OnUpdate', nil);
-          end
-        end
-      end
-
-      eventHandler:SetScript('OnEvent', UnitAura_OnEvent);
-
-      eventHandler:RegisterEvent('UNIT_AURA');
-    end
-  end
 end
 
 -- load addon
