@@ -7,6 +7,7 @@ local unpack = unpack;
 local format = string.format;
 local max = math.max;
 local floor = math.floor;
+local ceil = math.ceil;
 local print = print;
 
 local buttonFlash = {};
@@ -16,28 +17,26 @@ local function IsTanking(unit)
   return select(1, UnitDetailedThreatSituation('player', unit));
 end
 
+local function ShowHealthText(frame)
+  Addon:UpdateHealthText(frame);
+end
+
+local function HideHealthText(frame)
+  frame.healthBar.healthText:SetText(nil);
+  frame.healthBar.healthText:Hide();
+end
+
 function Addon:Load()
   do
     local eventHandler = CreateFrame('Frame', nil);
-    eventHandler:SetScript('OnEvent', function(handler, ...)
-        self:OnEvent(...);
+
+    -- set OnEvent handler
+    eventHandler:SetScript('OnEvent', function(handler, event, ...)
+        self:OnEvent(event);
       end)
 
     eventHandler:RegisterEvent('ADDON_LOADED');
     eventHandler:RegisterEvent('PLAYER_LOGIN');
-  end
-end
-
-function Addon:UpdateNamePlateHealthValue(frame)
-  if (not frame.healthBar.value) then
-    frame.healthBar.value = frame.healthBar:CreateFontString(nil, 'ARTWORK');
-    frame.healthBar.value:SetFontObject('GameFontHighlight');
-    -- frame.healthBar.value:SetShadowOffset(1, 1);
-    frame.healthBar.value:SetPoint('LEFT', frame.healthBar.value:GetParent(), 'RIGHT', 7, 0);
-  else
-    local _, maxHealth = frame.healthBar:GetMinMaxValues();
-    local value = frame.healthBar:GetValue();
-    frame.healthBar.value:SetText(format(floor((value / maxHealth) * 100)) .. ' %');
   end
 end
 
@@ -55,37 +54,51 @@ function Addon:SetupNamePlate(frame, setupOptions, frameOptions)
   frame.castBar.border:SetVertexColor(0.0, 0.0, 0.0, 1.0);
 
   frame.castBar.BorderShield:SetSize(20, 24);
-  frame.castBar.Icon:SetSize(24, 24);
+  frame.castBar.BorderShield:ClearAllPoints();
+	frame.castBar.BorderShield:SetPoint('RIGHT', frame.castBar, 'LEFT', 0, 0);
 
-  self:UpdateNamePlateHealthValue(frame);
+	frame.castBar.Icon:SetSize(20, 20);
+	frame.castBar.Icon:ClearAllPoints();
+	frame.castBar.Icon:SetPoint('RIGHT', frame.castBar, 'LEFT', 0, 0);
 
   if (frame.optionTable.showClassificationIndicator) then
     frame.optionTable.showClassificationIndicator = nil;
   end
 
-  -- if (NamePlatePlayerResourceFrame) then
-  -- local _, class = UnitClass('player');
-  -- local namePlatePlayer = C_NamePlate.GetNamePlateForUnit('player');
-  --
-  -- if (namePlatePlayer) then
-  -- if (class == 'DEATHKNIGHT') then
-  -- DeathKnightResourceOverlayFrame:Hide();
-  -- DeathKnightResourceOverlayFrame.Show = function () end
-  --
-  -- RuneFrame:SetParent(namePlatePlayer.UnitFrame);
-  -- RuneFrame:ClearAllPoints();
-  -- RuneFrame:SetPoint('CENTER', namePlatePlayer.UnitFrame.healthBar, 'CENTER', 3, -36);
-  -- end
-  -- end
-  --
-  -- if (class == 'DEATHKNIGHT') then
-  -- RuneFrame:SetShown(namePlatePlayer ~= nil);
-  -- end
-  -- end
+  if (not frame.healthBar.healthText) then
+    frame.healthBar.healthText = frame.healthBar:CreateFontString(nil, 'ARTWORK');
+    -- frame.healthBar.healthText:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE');
+    frame.healthBar.healthText:SetFontObject('GameFontHighlight');
+    frame.healthBar.healthText:SetPoint('LEFT', frame.healthBar.healthText:GetParent(), 'RIGHT', 7, 0);
+
+    frame:HookScript('OnShow', ShowHealthText);
+    frame:HookScript('OnHide', HideHealthText);
+
+    frame.healthBar.update = 0.5;
+  end
 end
 
-function Addon:UpdateNamePlateHealth(frame)
-  self:UpdateNamePlateHealthValue(frame);
+function Addon:UpdateNamePlate(frame, elapsed)
+  if (frame.healthBar.update) then
+    frame.healthBar.update = frame.healthBar.update + elapsed;
+
+    if (frame.healthBar.update > 0.5) then
+      frame.healthBar.update = 0;
+      self:UpdateHealthText(frame);
+    end
+  end
+end
+
+function Addon:UpdateHealthText(frame)
+  if (not frame.healthBar.healthText) then return end
+
+  if (UnitHealthMax(frame.displayedUnit) > 0) then
+    local percent = ceil(100 * (UnitHealth(frame.displayedUnit) / UnitHealthMax(frame.displayedUnit)));
+		frame.healthBar.healthText:SetFormattedText("%d%%", percent);
+    frame.healthBar.healthText:Show();
+  else
+    frame.healthBar.healthText:Hide();
+  end
 end
 
 function Addon:UpdateNamePlateHealthColor(frame)
@@ -198,7 +211,7 @@ function Addon:ActionButtonDown(id)
     button = _G['ActionButton'..id];
   end
 
-  if not button then return end
+  if (not button) then return end
   self:AnimateButton(button);
 end
 
@@ -234,8 +247,12 @@ function Addon:HookActionEvents()
     Addon:SetupNamePlate(frame, setupOptions, frameOptions);
   end
 
-  local function Frame_UpdateNamePlateHealth(frame)
-    Addon:UpdateNamePlateHealth(frame);
+  local function Frame_NamePlateOnUpdate(frame, elapsed)
+    Addon:UpdateNamePlate(frame, elapsed);
+  end
+
+  local function Frame_UpdateHealthText(frame, ...)
+    Addon:UpdateHealthText(frame);
   end
 
   local function Frame_UpdateNamePlateHealthColor(frame)
@@ -275,7 +292,8 @@ function Addon:HookActionEvents()
   end
 
   hooksecurefunc('DefaultCompactNamePlateFrameSetupInternal', Frame_SetupNamePlate);
-  hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateNamePlateHealth);
+  hooksecurefunc('CompactUnitFrame_OnUpdate', Frame_NamePlateOnUpdate);
+  -- hooksecurefunc('CompactUnitFrame_UpdateHealth', Frame_UpdateHealthText);
   hooksecurefunc('CompactUnitFrame_UpdateHealthColor', Frame_UpdateNamePlateHealthColor);
   hooksecurefunc('CompactUnitFrame_UpdateHealthBorder', Frame_UpdateNamePlateHealthBorder);
   -- hooksecurefunc('CastingBarFrame_OnUpdate', CastingBarFrame_Update);
