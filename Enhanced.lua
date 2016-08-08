@@ -55,11 +55,11 @@ function Addon:SetupNamePlate(frame, setupOptions, frameOptions)
 
   frame.castBar.BorderShield:SetSize(20, 24);
   frame.castBar.BorderShield:ClearAllPoints();
-	frame.castBar.BorderShield:SetPoint('RIGHT', frame.castBar, 'LEFT', 0, 0);
+  frame.castBar.BorderShield:SetPoint('RIGHT', frame.castBar, 'LEFT', 0, 0);
 
-	frame.castBar.Icon:SetSize(20, 20);
-	frame.castBar.Icon:ClearAllPoints();
-	frame.castBar.Icon:SetPoint('RIGHT', frame.castBar, 'LEFT', 0, 0);
+  frame.castBar.Icon:SetSize(20, 20);
+  frame.castBar.Icon:ClearAllPoints();
+  frame.castBar.Icon:SetPoint('RIGHT', frame.castBar, 'LEFT', 0, 0);
 
   if (frame.optionTable.showClassificationIndicator) then
     frame.optionTable.showClassificationIndicator = nil;
@@ -94,7 +94,7 @@ function Addon:UpdateHealthText(frame)
 
   if (UnitHealthMax(frame.displayedUnit) > 0) then
     local percent = ceil(100 * (UnitHealth(frame.displayedUnit) / UnitHealthMax(frame.displayedUnit)));
-		frame.healthBar.healthText:SetFormattedText("%d%%", percent);
+    frame.healthBar.healthText:SetFormattedText("%d%%", percent);
     frame.healthBar.healthText:Show();
   else
     frame.healthBar.healthText:Hide();
